@@ -28,6 +28,9 @@ struct FWorldConfig
 	TArray<FTileType> TileTypes;
 	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category="Material")
 	UMaterialInterface* Material;
+
+	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category="Material")
+	TArray<float> LODs = {1, 0.1, 0.01};
 	
 	uint16 GetWorldBlockHeight() const
 	{

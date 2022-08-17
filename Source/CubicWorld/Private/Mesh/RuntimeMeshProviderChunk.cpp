@@ -168,7 +168,7 @@ void URuntimeMeshProviderChunk::AddTile(FRuntimeMeshRenderableMeshData& MeshData
 			return index;
 		}
 	};
-	const auto& [ChunkSize, MaxChunksZ, MaxChunkRenderDistance, BlockSize, TileTypes, Material] = Chunk->ChunkConfig.WorldConfig;
+	const FVector& BlockSize = Chunk->ChunkConfig.WorldConfig.BlockSize;
 	const FVector BlockVertices[12] = {
 		FVector(0.0f,	 0.0f,		0.0f),
 		FVector(BlockSize.X, 0.0f,		0.0f),
@@ -180,7 +180,8 @@ void URuntimeMeshProviderChunk::AddTile(FRuntimeMeshRenderableMeshData& MeshData
 		FVector(BlockSize.X, BlockSize.Y,	BlockSize.Z),
 		FVector(0.0f,	 BlockSize.Y,	BlockSize.Z),
 	};
-	
+
+	const TArray<FTileType>& TileTypes = Chunk->ChunkConfig.WorldConfig.TileTypes;
 	FVector TangentX, TangentZ;
 	auto [TileType, bIsSolid, bSideDiffers, TextureId, SideTextureId, Color, SideColor] = TileTypes[InTileConfig.Tile.TileID];
 	if(!bSideDiffers)
@@ -335,7 +336,7 @@ void URuntimeMeshProviderChunk::AddCollisionTile(FRuntimeMeshCollisionData& Coll
 		return index;
 	};
 
-	const auto& [ChunkSize, MaxChunksZ, MaxChunkRenderDistance, BlockSize, TileTypes, Material] = Chunk->ChunkConfig.WorldConfig;
+	const FVector& BlockSize = Chunk->ChunkConfig.WorldConfig.BlockSize;
 	const FVector BlockVertices[8] = {
 		FVector(0.0f,	 0.0f,			BlockSize.Z),
 		FVector(0.0f,	 -BlockSize.Y,	BlockSize.Z),

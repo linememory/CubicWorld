@@ -22,7 +22,7 @@ float USimpleGenerator::GetNoise(const float X, const float Y)
 	return height;
 }
 
-FTileOrNull USimpleGenerator::GetTile(const FIntVector& Position, FWorldConfig& WorldConfig)
+TOptional<FTile> USimpleGenerator::GetTile(const FIntVector& Position, FWorldConfig& WorldConfig)
 {
 	if(!bHasBeenInitialized) Init();
 	const int MaxHeight = WorldConfig.GetWorldBlockHeight();
@@ -43,7 +43,7 @@ FTileOrNull USimpleGenerator::GetTile(const FIntVector& Position, FWorldConfig& 
 			index = 2;
 		else if(tileHeightPercentage <= 1)
 			index = 4;
-		return FTileOrNull(FTile(index));
+		return TOptional<FTile>(FTile(index));
 	}
-	return FTileOrNull();
+	return TOptional<FTile>();
 }

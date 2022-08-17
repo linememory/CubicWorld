@@ -8,33 +8,6 @@
 #include "UObject/Object.h"
 #include "Generator.generated.h"
 
-USTRUCT(BlueprintType)
-struct FTileOrNull
-{
-	GENERATED_BODY()
-	bool hasTile = false;
-
-private:
-	FTile Tile;
-
-public:
-	FTileOrNull() {}
-	explicit FTileOrNull(const FTile &InTile)
-	{
-		SetTile(InTile);
-	}
-	void SetTile(const FTile &InTile)
-	{
-		Tile = InTile;
-		hasTile = true;
-	}
-
-	FTile *GetTile()
-	{
-		return &Tile;
-	}
-};
-
 /**
  *
  */
@@ -45,10 +18,9 @@ class CUBICWORLD_API UGenerator : public UObject
 public:
 	UFUNCTION()
 	TMap<FIntVector, FTile> GenerateChunk(FChunkConfig ChunkConfig, TMap<FIntVector, FTile> InTiles = {});
-
-	UFUNCTION()
-	virtual FTileOrNull GetTile(const FIntVector &Position, FWorldConfig &WorldConfig)
+	
+	virtual TOptional<FTile> GetTile(const FIntVector &Position, FWorldConfig &WorldConfig)
 	{
-		return FTileOrNull();
+		return TOptional<FTile>();
 	}
 };

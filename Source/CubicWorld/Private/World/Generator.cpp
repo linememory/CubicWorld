@@ -31,9 +31,9 @@ TMap<FIntVector, FTile> UGenerator::GenerateChunk(FChunkConfig ChunkConfig, TMap
 						}
 					}
 				}
-				else if(FTileOrNull tileOrNull = GetTile(WorldPosition, ChunkConfig.WorldConfig); tileOrNull.hasTile)
+				else if(TOptional<FTile> tileOrEmpty = GetTile(WorldPosition, ChunkConfig.WorldConfig); tileOrEmpty.IsSet())
 				{
-					tiles.Add(FIntVector(X,Y,Z), *tileOrNull.GetTile());
+					tiles.Add(FIntVector(X,Y,Z), tileOrEmpty.GetValue());
 					if(!hasGeometry && !(
 						X < 0 || X >= ChunkConfig.WorldConfig.ChunkSize.X ||
 						Y < 0 || Y >= ChunkConfig.WorldConfig.ChunkSize.Y ||

@@ -44,10 +44,11 @@ public:
 	bool bMarkedForDestroy = false;
 
 private:
-	void AddTile(FRuntimeMeshRenderableMeshData &MeshData, FTileConfig InTileConfig, bool isFlatShaded = true, TMap<FVector, int32> *IndexLookup = nullptr);
+	void AddTile(FRuntimeMeshRenderableMeshData &MeshData, FTileConfig InTileConfig, FVector BlockSize, bool isFlatShaded = true, TMap<FVector, int32> *IndexLookup = nullptr);
 	void AddCollisionTile(FRuntimeMeshCollisionData &CollisionData, FTileConfig InTileConfig, TMap<FVector, int> *IndexLookup = nullptr);
 
-	TArray<bool> GetSidesToRender(FIntVector tilePosition) const;
+	TArray<bool> GetSidesToRender(FIntVector InPosition, int divider = 1) const;
+	TArray<FTile> GetBlocks(FIntVector InPosition, int divider = 1) const;
 
 protected:
 	virtual void Initialize() override;

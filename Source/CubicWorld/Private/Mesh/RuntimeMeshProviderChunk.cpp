@@ -41,26 +41,30 @@ void URuntimeMeshProviderChunk::SetChunk(const UChunk* InChunk)
 void URuntimeMeshProviderChunk::Initialize()
 {
 	FScopeLock Lock(&PropertySyncRoot);
-	const FWorldConfig& WorldConfig = Chunk->ChunkConfig.WorldConfig;
+	const auto Material = Chunk->ChunkConfig.WorldConfig.Material;
+	SetupMaterialSlot(0, FName("Chunk Base"), Material);
 	
-	FRuntimeMeshLODProperties LODProperties;
-	LODProperties.ScreenSize = 1.0f;
+	// Setup LODs
+	const auto LODConfig = Chunk->ChunkConfig.WorldConfig.LODs;
+	TArray<FRuntimeMeshLODProperties> LODs;
+	for (const auto lod : LODConfig)
+	{
+		FRuntimeMeshLODProperties LODProperties;
+		LODProperties.ScreenSize = lod;
+		LODs.Add(LODProperties);
+	}
+	ConfigureLODs(LODs);
 
-	ConfigureLODs({ LODProperties });
-
-	SetupMaterialSlot(0, FName("Chunk Base"), WorldConfig.Material);
-
-	FRuntimeMeshSectionProperties Properties0;
-	Properties0.bCastsShadow = true;
-	Properties0.bIsVisible = true;
-	Properties0.MaterialSlot = 0;
-	Properties0.bWants32BitIndices = false;
-	Properties0.UpdateFrequency = ERuntimeMeshUpdateFrequency::Infrequent;
-	
-	CreateSection(0, 0, Properties0);
-
-
-	MarkCollisionDirty();
+	// Setup sections
+	for (int32 LODIndex = 0; LODIndex < LODConfig.Num(); LODIndex++)
+	{
+		FRuntimeMeshSectionProperties Properties;
+		Properties.bCastsShadow = true;
+		Properties.bIsVisible = true;
+		Properties.MaterialSlot = 0;
+		Properties.UpdateFrequency = ERuntimeMeshUpdateFrequency::Infrequent;
+		CreateSection(LODIndex, 0, Properties);
+	}
 }
 
 FBoxSphereBounds URuntimeMeshProviderChunk::GetBounds()
@@ -69,41 +73,61 @@ FBoxSphereBounds URuntimeMeshProviderChunk::GetBounds()
 	return FBoxSphereBounds(FBox(-extend*0.5f, (extend*0.5f)).ShiftBy(FVector(0,0,extend.Z/2)));
 }
 
-TArray<bool> URuntimeMeshProviderChunk::GetSidesToRender(FIntVector tilePosition) const
+TArray<bool> URuntimeMeshProviderChunk::GetSidesToRender(FIntVector InPosition, int divider) const
 {
 	TArray<bool> SidesToRender = {true, true, true, true, true, true};
-	if(Chunk == nullptr) return SidesToRender;
-	const TMap<FIntVector, FTile> Tiles = Chunk->GetTiles();
-	if(Tiles.Find(FIntVector(tilePosition.X, tilePosition.Y, tilePosition.Z+1))) // Top
-	{
+	int blocks = divider*divider*divider;
+	if(GetBlocks(FIntVector(InPosition.X, InPosition.Y, InPosition.Z+divider), divider).Num() >= blocks) // Top
+		{
 		SidesToRender[0] = false;
-	}
-	if(Tiles.Find(FIntVector(tilePosition.X, tilePosition.Y, tilePosition.Z-1))) // Bottom
-	{
+		}
+	if(GetBlocks(FIntVector(InPosition.X, InPosition.Y, InPosition.Z-divider), divider).Num() >= blocks) // Bottom
+		{
 		SidesToRender[1] = false;
-	}
-	if(Tiles.Find(FIntVector(tilePosition.X, tilePosition.Y+1, tilePosition.Z))) // Front
-	{
+		}
+	if(GetBlocks(FIntVector(InPosition.X, InPosition.Y+divider, InPosition.Z), divider).Num() >= blocks) // Front
+		{
 		SidesToRender[2] = false;
-	}
-	if(Tiles.Find(FIntVector(tilePosition.X-1, tilePosition.Y, tilePosition.Z))) // Left
-	{
+		}
+	if(GetBlocks(FIntVector(InPosition.X-divider, InPosition.Y, InPosition.Z), divider).Num() >= blocks) // Left
+		{
 		SidesToRender[3] = false;
-	}
-	if(Tiles.Find(FIntVector(tilePosition.X, tilePosition.Y-1, tilePosition.Z))) // Back
-	{
+		}
+	if(GetBlocks(FIntVector(InPosition.X, InPosition.Y-divider, InPosition.Z), divider).Num() >= blocks) // Back
+		{
 		SidesToRender[4] = false;
-	}
-	if(Tiles.Find(FIntVector(tilePosition.X+1, tilePosition.Y, tilePosition.Z))) // Right
-	{
+		}
+	if(GetBlocks(FIntVector(InPosition.X+divider, InPosition.Y, InPosition.Z), divider).Num() >= blocks) // Right
+		{
 		SidesToRender[5] = false;
-	}
+		}
 	return SidesToRender;
+}
+
+TArray<FTile> URuntimeMeshProviderChunk::GetBlocks(FIntVector InPosition, int divider) const
+{
+	TArray<FTile> Tiles;
+	const FTile* Result = nullptr;
+	for (int Z = 0; Z < divider; ++Z)
+	{
+		for (int Y = 0; Y < divider; ++Y)
+		{
+			for (int X = 0; X < divider; ++X)
+			{
+				if(const auto tile = Chunk->GetTiles().Find(InPosition+FIntVector(X,Y,Z)); tile != nullptr)
+				{
+					Result = tile;
+					Tiles.Add(*tile);
+				}
+			}
+		}
+	}
+	return Tiles;
 }
 
 bool URuntimeMeshProviderChunk::GetSectionMeshForLOD(const int32 LODIndex, const int32 SectionId, FRuntimeMeshRenderableMeshData& MeshData)
 {
-	check(SectionId == 0 && LODIndex <= 1);
+	check(SectionId == 0 && LODIndex <= 2);
 	SCOPE_CYCLE_COUNTER(STAT_GenerateMesh);
 	SCOPED_NAMED_EVENT(URuntimeMeshProviderChunk_GenerateMesh, FColor::Green);
 	FScopeLock Lock(&PropertySyncRoot);
@@ -111,23 +135,50 @@ bool URuntimeMeshProviderChunk::GetSectionMeshForLOD(const int32 LODIndex, const
 	
 	if(Chunk == nullptr) return false;
 
-	TMap<FVector, int32> IndexLookup;
-	for (const TTuple<FIntVector, FTile> tile : Chunk->GetTiles())
+	// TMap<FVector, int32> IndexLookup;
+	if(LODIndex == 0)
 	{
-		if(bMarkedForDestroy)
+		for (const TTuple<FIntVector, FTile> tile : Chunk->GetTiles())
 		{
-			break;
+			if(bMarkedForDestroy)
+			{
+				break;
+			}
+			if(	tile.Key.X < 0 || tile.Key.X >= Chunk->ChunkConfig.WorldConfig.ChunkSize.X ||
+				tile.Key.Y < 0 || tile.Key.Y >= Chunk->ChunkConfig.WorldConfig.ChunkSize.Y ||
+				tile.Key.Z < 0 || tile.Key.Z >= Chunk->ChunkConfig.WorldConfig.ChunkSize.Z ) 
+			{
+				continue;
+			}
+		
+			const FIntVector Position  = tile.Key;
+		
+			const FTileConfig tileConfig = FTileConfig(GetSidesToRender(Position), tile.Value, Position);
+			AddTile(MeshData, tileConfig, Chunk->ChunkConfig.WorldConfig.BlockSize);
+			
 		}
-		if(	tile.Key.X < 0 || tile.Key.X >= Chunk->ChunkConfig.WorldConfig.ChunkSize.X ||
-			tile.Key.Y < 0 || tile.Key.Y >= Chunk->ChunkConfig.WorldConfig.ChunkSize.Y ||
-			tile.Key.Z < 0 || tile.Key.Z >= Chunk->ChunkConfig.WorldConfig.ChunkSize.Z ) 
+	} else
+	{
+		const int divider = FMath::Pow(2.0f, LODIndex);
+		FWorldConfig WorldConfig = Chunk->ChunkConfig.WorldConfig;
+		for (int Z = 0; Z < WorldConfig.ChunkSize.Z/divider; ++Z)
 		{
-			continue;
+			for (int Y = 0; Y < WorldConfig.ChunkSize.Y/divider; ++Y)
+			{
+				for (int X = 0; X < WorldConfig.ChunkSize.X/divider; ++X)
+				{
+					const FIntVector Position  = FIntVector(X*divider, Y*divider, Z*divider);
+					if(auto block = GetBlocks(Position, divider); !block.IsEmpty())
+					{
+						const FTileConfig tileConfig = FTileConfig(GetSidesToRender(Position, divider), block.Last(), Position);
+						FVector BlockSize = Chunk->ChunkConfig.WorldConfig.BlockSize * divider;
+						AddTile(MeshData, tileConfig, BlockSize);
+					}
+				}
+			}
 		}
-		const FIntVector Position  = tile.Key;
-		const FTileConfig tileConfig = FTileConfig(GetSidesToRender(Position), tile.Value, Position);
-		AddTile(MeshData, tileConfig);
 	}
+	
 	if(MeshData.Triangles.Num() <= 0 || MeshData.Positions.Num() <= 0)
 	{
 		return false;
@@ -135,7 +186,7 @@ bool URuntimeMeshProviderChunk::GetSectionMeshForLOD(const int32 LODIndex, const
 	return true;
 }
 
-void URuntimeMeshProviderChunk::AddTile(FRuntimeMeshRenderableMeshData& MeshData, FTileConfig InTileConfig, bool isFlatShaded, TMap<FVector, int32>* IndexLookup)
+void URuntimeMeshProviderChunk::AddTile(FRuntimeMeshRenderableMeshData &MeshData, FTileConfig InTileConfig, FVector BlockSize, bool isFlatShaded, TMap<FVector, int32> *IndexLookup)
 {
 	FScopeLock Lock(&PropertySyncRoot);
 	SCOPE_CYCLE_COUNTER(STAT_GenerateTileMesh);
@@ -168,8 +219,11 @@ void URuntimeMeshProviderChunk::AddTile(FRuntimeMeshRenderableMeshData& MeshData
 			return index;
 		}
 	};
-	const FVector& BlockSize = Chunk->ChunkConfig.WorldConfig.BlockSize;
-	const FVector BlockVertices[12] = {
+
+
+	// BlockSize = Chunk->ChunkConfig.WorldConfig.BlockSize;
+	
+	const FVector BlockVertices[8] = {
 		FVector(0.0f,	 0.0f,		0.0f),
 		FVector(BlockSize.X, 0.0f,		0.0f),
 		FVector(BlockSize.X, BlockSize.Y,	0.0f),
@@ -195,7 +249,7 @@ void URuntimeMeshProviderChunk::AddTile(FRuntimeMeshRenderableMeshData& MeshData
 	FVector2f textureOffset = FVector2f(TextureId%textureMapSize, floor(TextureId/textureMapSize))*textureSize;
 	FVector2f sideTextureOffset = FVector2f(SideTextureId%textureMapSize, floor(SideTextureId/textureMapSize))*textureSize;
 	
-	FVector position = FVector(InTileConfig.Position.X, InTileConfig.Position.Y, InTileConfig.Position.Z)*BlockSize - FVector(GetBounds().BoxExtent.X,GetBounds().BoxExtent.Y,0.0f);
+	FVector position = FVector(InTileConfig.Position.X, InTileConfig.Position.Y, InTileConfig.Position.Z)*Chunk->ChunkConfig.WorldConfig.BlockSize - FVector(GetBounds().BoxExtent.X,GetBounds().BoxExtent.Y,0.0f);
 	
 	if(InTileConfig.SidesTORender[0]) // Top
 	{
@@ -335,8 +389,9 @@ void URuntimeMeshProviderChunk::AddCollisionTile(FRuntimeMeshCollisionData& Coll
 		IndexLookup->Add(InPosition, index);
 		return index;
 	};
-
+		
 	const FVector& BlockSize = Chunk->ChunkConfig.WorldConfig.BlockSize;
+
 	const FVector BlockVertices[8] = {
 		FVector(0.0f,	 0.0f,			BlockSize.Z),
 		FVector(0.0f,	 -BlockSize.Y,	BlockSize.Z),

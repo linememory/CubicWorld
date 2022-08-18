@@ -86,9 +86,45 @@ void AChunkMesh::GenerateMesh()
 			CollisionSettings.bUseAsyncCooking = true;
 			ChunkCollisionProvider->SetCollisionSettings(CollisionSettings);
 			RMC->Initialize(ChunkCollisionProvider);
+
+			
 			// const FWorldConfig& WorldConfig = Chunk->ChunkConfig.WorldConfig;
-			// DrawDebugBox(GetWorld(), GetActorLocation()+WorldConfig.GetChunkWorldSize()*FVector(0,0,0.5f), WorldConfig.GetChunkWorldSize()/2, FColor::Orange, true);
-			// DrawDebugSolidBox(GetWorld(), GetActorLocation()+WorldConfig.GetChunkWorldSize()*FVector(0,0,0.5f), WorldConfig.GetChunkWorldSize()/2*1.001, FColor::Blue.WithAlpha(5), true);
+			// DrawDebugBox(GetWorld(), GetActorLocation()+WorldConfig.GetChunkWorldSize()*FVector(0,0,0.5f), WorldConfig.GetChunkWorldSize()/2, FColor::Orange, true, -1, 0, 2);
+			// DrawDebugSolidBox(GetWorld(), GetActorLocation()+WorldConfig.GetChunkWorldSize()*FVector(0,0,0.5f), WorldConfig.GetChunkWorldSize()/2*1.0001, FColor::Orange.WithAlpha(5), true);
+
+			// for (int Z = 0; Z < WorldConfig.ChunkSize.Z; Z++)
+			// {
+			// 	for (int Y = 0; Y < WorldConfig.ChunkSize.Y; ++Y)
+			// 	{
+			// 		for (int X = 0; X < WorldConfig.ChunkSize.X; ++X)
+			// 		{
+			// 			FVector position = (FVector(X,Y,Z)+FVector(0.5,0.5,0.5))*WorldConfig.BlockSize + GetActorLocation()+WorldConfig.GetChunkWorldSize()*FVector(0,0,0.5) - WorldConfig.GetChunkWorldSize()/2;
+			// 			DrawDebugBox(GetWorld(), position, WorldConfig.BlockSize/2*1.00014, FColor::Purple, true, -1, 0, 0.2);
+			// 			// DrawDebugSolidBox(GetWorld(), position, WorldConfig.BlockSize/2*1.0001, FColor::Blue.WithAlpha(2), true);
+			// 		}
+			// 	}
+			// }
+			// for (auto tile : Chunk->GetTiles())
+			// {
+			// 	FVector position = (FVector(tile.Key)+FVector(0.5,0.5,0.5))*WorldConfig.BlockSize + GetActorLocation()+WorldConfig.GetChunkWorldSize()*FVector(0,0,0.5) - WorldConfig.GetChunkWorldSize()/2;
+			// 	DrawDebugBox(GetWorld(), position, WorldConfig.BlockSize/2*1.00015, FColor::Blue, true, -1, 0, 0.5);
+			// 	// DrawDebugSolidBox(GetWorld(), position, WorldConfig.BlockSize/2*1.0001, FColor::Blue.WithAlpha(2), true);
+			// }
+
+
+			// for (auto tile : Chunk->GetTiles())
+			// {
+			// 	const int multiplier = 2;
+			// 	if(	tile.Key.X % multiplier == 0 &&
+			// 		tile.Key.Y % multiplier == 0 &&
+			// 		tile.Key.Z % multiplier == 0 ) 
+			// 	{
+			// 	
+			// 		FVector position = (FVector(tile.Key)+FVector(1,1,1))*WorldConfig.BlockSize + GetActorLocation()+WorldConfig.GetChunkWorldSize()*FVector(0,0,0.5) - WorldConfig.GetChunkWorldSize()/2;
+			// 		DrawDebugBox(GetWorld(), position, WorldConfig.BlockSize*1.00025, FColor::Green, true, -1, 0, 1.5);
+			// 		// DrawDebugSolidBox(GetWorld(), position, WorldConfig.BlockSize*1.0002, FColor::Green.WithAlpha(2), true);
+			// 	}
+			// }
 		}
 	}
 	

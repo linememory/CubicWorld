@@ -73,7 +73,6 @@ FBoxSphereBounds URuntimeMeshProviderChunk::GetBounds()
 	return FBoxSphereBounds(FBox(-extend*0.5f, (extend*0.5f)).ShiftBy(FVector(0,0,extend.Z/2)));
 }
 
-TArray<bool> URuntimeMeshProviderChunk::GetSidesToRender(FIntVector InPosition, int divider) const
 TArray<bool> URuntimeMeshProviderChunk::GetSidesToRender(const FIntVector InPosition, const int divider) const
 {
 	TArray<bool> SidesToRender = {true, true, true, true, true, true};
@@ -126,7 +125,7 @@ TArray<FTile> URuntimeMeshProviderChunk::GetBlocks(const FIntVector InPosition, 
 
 bool URuntimeMeshProviderChunk::GetSectionMeshForLOD(const int32 LODIndex, const int32 SectionId, FRuntimeMeshRenderableMeshData& MeshData)
 {
-	check(SectionId == 0 && LODIndex <= 2);
+	check(SectionId == 0);
 	SCOPE_CYCLE_COUNTER(STAT_GenerateMesh);
 	SCOPED_NAMED_EVENT(URuntimeMeshProviderChunk_GenerateMesh, FColor::Green);
 	FScopeLock Lock(&PropertySyncRoot);
@@ -345,17 +344,6 @@ bool URuntimeMeshProviderChunk::HasCollisionMesh()
 
 bool URuntimeMeshProviderChunk::GetCollisionMesh(FRuntimeMeshCollisionData& CollisionData)
 {
-	FScopeLock Lock(&PropertySyncRoot);
-	SCOPE_CYCLE_COUNTER(STAT_GenerateTileCollisionMesh);
-		if(IndexLookup == nullptr)
-			return CollisionData.Vertices.Add(FVector3f(InPosition));
-		
-		if(const int* foundIndex = IndexLookup->Find(InPosition); foundIndex != nullptr && *foundIndex >= 0 && *foundIndex < CollisionData.Vertices.Num() )
-		{
-		const int index = CollisionData.Vertices.Add(FVector3f(InPosition));
-		IndexLookup->Add(InPosition, index);
-		return index;
-	};
 	return false;
 }
 

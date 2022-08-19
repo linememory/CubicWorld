@@ -9,6 +9,7 @@
 #include "RuntimeMeshProviderChunk.generated.h"
 
 struct FBlockConfig;
+struct FSides;
 
 /**
  *
@@ -45,7 +46,7 @@ public:
 private:
 	void AddTile(FRuntimeMeshRenderableMeshData &MeshData, const FBlockConfig& InTileConfig);
 	
-	TArray<bool> GetSidesToRender(FIntVector InPosition, int divider = 1) const;
+	FSides GetSidesToRender(FIntVector InPosition, int divider = 1) const;
 	TArray<FTile> GetBlocks(FIntVector InPosition, int divider = 1) const;
 
 protected:
@@ -58,12 +59,28 @@ protected:
 	virtual bool IsThreadSafe() override;
 };
 
+
+struct FSides
+{
+	bool Top = false;		// Z+
+	bool Bottom = false;	// Z-
+	bool Front = false;		// Y+
+	bool Back = false;		// Y-
+	bool Right = false;		// X+
+	bool Left = false;		// X-
+
+	FSides(){}
+	explicit FSides(const bool Sides): Top(Sides), Bottom(Sides), Front(Sides), Back(Sides), Right(Sides), Left(Sides) {}
+	FSides(const bool InTop, const bool InBottom, const bool InFront, const bool InBack, const bool InRight, const bool InLeft)
+		: Top(InTop), Bottom(InBottom), Front(InFront), Back(InBack), Right(InRight), Left(InLeft) {};
+};
+
 struct FBlockConfig
 {
 	FIntVector Position;
-	TArray<bool> SidesTORender;
+	FSides SidesTORender;
 	FVector Size;
 	FTile Tile;
 
-	FBlockConfig(TArray<bool> InNeighbors, const FTile InTile, const FIntVector InPosition, const FVector& InSize) : Position(InPosition), SidesTORender{InNeighbors}, Size(InSize), Tile(InTile) {};
+	FBlockConfig(FSides& InNeighbors, const FTile& InTile, const FIntVector& InPosition, const FVector& InSize) : Position(InPosition), SidesTORender{InNeighbors}, Size(InSize), Tile(InTile) {};
 };

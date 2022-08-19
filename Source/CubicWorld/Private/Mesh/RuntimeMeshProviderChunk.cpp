@@ -73,46 +73,48 @@ FBoxSphereBounds URuntimeMeshProviderChunk::GetBounds()
 	return FBoxSphereBounds(FBox(-extend*0.5f, (extend*0.5f)).ShiftBy(FVector(0,0,extend.Z/2)));
 }
 
-TArray<bool> URuntimeMeshProviderChunk::GetSidesToRender(const FIntVector InPosition, const int divider) const
+FSides URuntimeMeshProviderChunk::GetSidesToRender(const FIntVector InPosition, const int divider) const
 {
-	TArray<bool> SidesToRender = {true, true, true, true, true, true};
+
+	FSides SidesToRender(true);
+	//TArray<bool> SidesToRender = {true, true, true, true, true, true};
 	const int maxBlocks = divider*divider*divider;
 	const FIntVector ChunkSize = Chunk->ChunkConfig.WorldConfig.ChunkSize;
 	if(const auto blocks = GetBlocks(FIntVector(InPosition.X, InPosition.Y, InPosition.Z+divider), divider);
 		blocks.Num() >= maxBlocks ||
 		InPosition.Z == ChunkSize.Z - divider && blocks.Num() >= ceil(divider*divider)) // Top
 	{
-		SidesToRender[0] = false;
+		SidesToRender.Top = false;
 	}
 	if(const auto blocks = GetBlocks(FIntVector(InPosition.X, InPosition.Y, InPosition.Z-divider), divider);
 		blocks.Num() >= maxBlocks ||
 		InPosition.Z == 0 && blocks.Num() >= ceil(divider*divider)) // Bottom
 	{
-		SidesToRender[1] = false;
+		SidesToRender.Bottom = false;
 	}
 	if(const auto blocks = GetBlocks(FIntVector(InPosition.X, InPosition.Y+divider, InPosition.Z), divider);
 		blocks.Num() >= maxBlocks ||
 		InPosition.Y == ChunkSize.Y - divider && blocks.Num() >= ceil(divider*divider)) // Front
 	{
-		SidesToRender[2] = false;
+		SidesToRender.Front = false;
 	}
 	if(const auto blocks = GetBlocks(FIntVector(InPosition.X-divider, InPosition.Y, InPosition.Z), divider);
 		blocks.Num() >= maxBlocks ||
 		InPosition.X == 0 && blocks.Num() >= ceil(divider*divider)) // Left
 	{
-		SidesToRender[3] = false;
+		SidesToRender.Left = false;
 	}
 	if(const auto blocks = GetBlocks(FIntVector(InPosition.X, InPosition.Y-divider, InPosition.Z), divider);
 		blocks.Num() >= maxBlocks ||
 		InPosition.Y == 0 && blocks.Num() >= ceil(divider*divider)) // Back
 	{
-		SidesToRender[4] = false;
+		SidesToRender.Back = false;
 	}
 	if(const auto blocks = GetBlocks(FIntVector(InPosition.X+divider, InPosition.Y, InPosition.Z), divider);
 		blocks.Num() >= maxBlocks ||
 		InPosition.X == ChunkSize.X - divider && blocks.Num() >= ceil(divider*divider)) // Right
 	{
-		SidesToRender[5] = false;
+		SidesToRender.Right = false;
 	}
 	return SidesToRender;
 }
@@ -142,11 +144,9 @@ bool URuntimeMeshProviderChunk::GetSectionMeshForLOD(const int32 LODIndex, const
 	SCOPE_CYCLE_COUNTER(STAT_GenerateMesh);
 	SCOPED_NAMED_EVENT(URuntimeMeshProviderChunk_GenerateMesh, FColor::Green);
 	FScopeLock Lock(&PropertySyncRoot);
-
 	
 	if(Chunk == nullptr) return false;
-
-	// TMap<FVector, int32> IndexLookup;
+	
 	if(LODIndex == 0)
 	{
 		for (const TTuple<FIntVector, FTile> tile : Chunk->GetTiles())
@@ -163,15 +163,16 @@ bool URuntimeMeshProviderChunk::GetSectionMeshForLOD(const int32 LODIndex, const
 			}
 		
 			const FIntVector Position  = tile.Key;
-		
-			const FBlockConfig tileConfig = FBlockConfig(GetSidesToRender(Position), tile.Value, Position, Chunk->ChunkConfig.WorldConfig.BlockSize);
+
+			FSides sides = GetSidesToRender(Position);
+			const FBlockConfig tileConfig = FBlockConfig(sides, tile.Value, Position, Chunk->ChunkConfig.WorldConfig.BlockSize);
 			AddTile(MeshData, tileConfig);
 			
 		}
 	} else
 	{
 		const int divider = FMath::Pow(2.0f, LODIndex);
-		FWorldConfig WorldConfig = Chunk->ChunkConfig.WorldConfig;
+		const FWorldConfig WorldConfig = Chunk->ChunkConfig.WorldConfig;
 		for (int Z = 0; Z < WorldConfig.ChunkSize.Z/divider; ++Z)
 		{
 			for (int Y = 0; Y < WorldConfig.ChunkSize.Y/divider; ++Y)
@@ -181,7 +182,8 @@ bool URuntimeMeshProviderChunk::GetSectionMeshForLOD(const int32 LODIndex, const
 					const FIntVector Position  = FIntVector(X*divider, Y*divider, Z*divider);
 					if(auto block = GetBlocks(Position, divider); !block.IsEmpty())
 					{
-						const FBlockConfig tileConfig = FBlockConfig(GetSidesToRender(Position, divider), block.Last(), Position, Chunk->ChunkConfig.WorldConfig.BlockSize * divider);
+						FSides sides = GetSidesToRender(Position, divider);
+						const FBlockConfig tileConfig = FBlockConfig(sides, block.Last(), Position, Chunk->ChunkConfig.WorldConfig.BlockSize * divider);
 						AddTile(MeshData, tileConfig);
 					}
 				}
@@ -241,7 +243,7 @@ void URuntimeMeshProviderChunk::AddTile(FRuntimeMeshRenderableMeshData &MeshData
 	
 	FVector position = FVector(InTileConfig.Position.X, InTileConfig.Position.Y, InTileConfig.Position.Z)*Chunk->ChunkConfig.WorldConfig.BlockSize - FVector(GetBounds().BoxExtent.X,GetBounds().BoxExtent.Y,0.0f);
 	
-	if(InTileConfig.SidesTORender[0]) // Top
+	if(InTileConfig.SidesTORender.Top) // Top
 	{
 		TangentZ = FVector(0.0f, 0.0f, 1.0f);
 		TangentX = FVector(0.0f, -1.0f, 0.0f);
@@ -254,7 +256,7 @@ void URuntimeMeshProviderChunk::AddTile(FRuntimeMeshRenderableMeshData &MeshData
 		MeshData.Triangles.AddTriangle(idx0, idx3, idx2);
 	}
 	
-	if(InTileConfig.SidesTORender[1]) // Bottom
+	if(InTileConfig.SidesTORender.Bottom) // Bottom
 	{
 		TangentZ = FVector(0.0f, 0.0f, -1.0f);
 		TangentX = FVector(0.0f, 1.0f, 0.0f);
@@ -267,7 +269,7 @@ void URuntimeMeshProviderChunk::AddTile(FRuntimeMeshRenderableMeshData &MeshData
 		MeshData.Triangles.AddTriangle(idx0, idx3, idx2);
 	}
 	
-	if(InTileConfig.SidesTORender[2]) // Front
+	if(InTileConfig.SidesTORender.Front) // Front
 	{
 		TangentZ = FVector(0.0f, 1.0f, 0.0f);
 		TangentX = FVector(1.0f, 0.0f, 0.0f);
@@ -280,7 +282,7 @@ void URuntimeMeshProviderChunk::AddTile(FRuntimeMeshRenderableMeshData &MeshData
 		MeshData.Triangles.AddTriangle(idx0, idx3, idx2);
 	}
 
-	if(InTileConfig.SidesTORender[3]) // Left
+	if(InTileConfig.SidesTORender.Left) // Left
 	{
 		TangentZ = FVector(-1.0f, 0.0f, 0.0f);
 		TangentX = FVector(0.0f, 1.0f, 0.0f);
@@ -293,7 +295,7 @@ void URuntimeMeshProviderChunk::AddTile(FRuntimeMeshRenderableMeshData &MeshData
 		MeshData.Triangles.AddTriangle(idx0, idx3, idx2);
 	}
 
-	if(InTileConfig.SidesTORender[4]) // Back
+	if(InTileConfig.SidesTORender.Back) // Back
 	{
 		TangentZ = FVector(0.0f, -1.0f, 0.0f);
 		TangentX = FVector(-1.0f, 0.0f, 0.0f);
@@ -306,7 +308,7 @@ void URuntimeMeshProviderChunk::AddTile(FRuntimeMeshRenderableMeshData &MeshData
 		MeshData.Triangles.AddTriangle(idx0, idx3, idx2);
 	}
 
-	if(InTileConfig.SidesTORender[5]) // Right
+	if(InTileConfig.SidesTORender.Right) // Right
 	{
 		TangentZ = FVector(1.0f, 0.0f, 0.0f);
 		TangentX = FVector(0.0f, -1.0f, 0.0f);

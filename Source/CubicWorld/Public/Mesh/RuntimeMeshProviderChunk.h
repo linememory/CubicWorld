@@ -3,13 +3,12 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "World/Structs/ChunkConfig.h"
 #include "RuntimeMeshProvider.h"
 #include "World/Chunk.h"
 #include "World/Structs/Tile.h"
 #include "RuntimeMeshProviderChunk.generated.h"
 
-struct FTileConfig;
+struct FBlockConfig;
 
 /**
  *
@@ -44,8 +43,8 @@ public:
 	bool bMarkedForDestroy = false;
 
 private:
-	void AddTile(FRuntimeMeshRenderableMeshData &MeshData, FTileConfig InTileConfig, FVector BlockSize, bool isFlatShaded = true, TMap<FVector, int32> *IndexLookup = nullptr);
-
+	void AddTile(FRuntimeMeshRenderableMeshData &MeshData, const FBlockConfig& InTileConfig);
+	
 	TArray<bool> GetSidesToRender(FIntVector InPosition, int divider = 1) const;
 	TArray<FTile> GetBlocks(FIntVector InPosition, int divider = 1) const;
 
@@ -59,11 +58,12 @@ protected:
 	virtual bool IsThreadSafe() override;
 };
 
-struct FTileConfig
+struct FBlockConfig
 {
-	TArray<bool> SidesTORender;
-	FTile Tile;
 	FIntVector Position;
+	TArray<bool> SidesTORender;
+	FVector Size;
+	FTile Tile;
 
-	FTileConfig(TArray<bool> InNeighbors, const FTile InTile, const FIntVector InPosition) : SidesTORender{InNeighbors}, Tile(InTile), Position(InPosition){};
+	FBlockConfig(TArray<bool> InNeighbors, const FTile InTile, const FIntVector InPosition, const FVector& InSize) : Position(InPosition), SidesTORender{InNeighbors}, Size(InSize), Tile(InTile) {};
 };

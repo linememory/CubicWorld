@@ -164,8 +164,8 @@ bool URuntimeMeshProviderChunk::GetSectionMeshForLOD(const int32 LODIndex, const
 		
 			const FIntVector Position  = tile.Key;
 		
-			const FTileConfig tileConfig = FTileConfig(GetSidesToRender(Position), tile.Value, Position);
-			AddTile(MeshData, tileConfig, Chunk->ChunkConfig.WorldConfig.BlockSize);
+			const FBlockConfig tileConfig = FBlockConfig(GetSidesToRender(Position), tile.Value, Position, Chunk->ChunkConfig.WorldConfig.BlockSize);
+			AddTile(MeshData, tileConfig);
 			
 		}
 	} else
@@ -181,54 +181,36 @@ bool URuntimeMeshProviderChunk::GetSectionMeshForLOD(const int32 LODIndex, const
 					const FIntVector Position  = FIntVector(X*divider, Y*divider, Z*divider);
 					if(auto block = GetBlocks(Position, divider); !block.IsEmpty())
 					{
-						const FTileConfig tileConfig = FTileConfig(GetSidesToRender(Position, divider), block.Last(), Position);
-						FVector BlockSize = Chunk->ChunkConfig.WorldConfig.BlockSize * divider;
-						AddTile(MeshData, tileConfig, BlockSize);
+						const FBlockConfig tileConfig = FBlockConfig(GetSidesToRender(Position, divider), block.Last(), Position, Chunk->ChunkConfig.WorldConfig.BlockSize * divider);
+						AddTile(MeshData, tileConfig);
 					}
 				}
 			}
 		}
 	}
-	
 	if(MeshData.Triangles.Num() <= 0 || MeshData.Positions.Num() <= 0)
 	{
 		return false;
 	}
+	int32 vertices = MeshData.Positions.Num();
+	int32 triangles = MeshData.Triangles.Num();
+	UE_LOG(LogTemp, Warning, TEXT("Vertices: %d - Triangles: %d"), vertices, triangles)
 	return true;
 }
 
-void URuntimeMeshProviderChunk::AddTile(FRuntimeMeshRenderableMeshData &MeshData, FTileConfig InTileConfig, FVector BlockSize, bool isFlatShaded, TMap<FVector, int32> *IndexLookup)
+void URuntimeMeshProviderChunk::AddTile(FRuntimeMeshRenderableMeshData &MeshData, const FBlockConfig& InTileConfig)
 {
 	FScopeLock Lock(&PropertySyncRoot);
 	SCOPE_CYCLE_COUNTER(STAT_GenerateTileMesh);
 	SCOPED_NAMED_EVENT(URuntimeMeshProviderChunk_GenerateTileMesh, FColor::Green);
 	auto AddVertex = [&](const FVector& InPosition, const FVector& InTangentX, const FVector& InTangentZ, const FVector2f& InTexCoord, const FColor& InColor = FColor::White)
 	{
-		int32 index;
-		if(isFlatShaded || IndexLookup == nullptr)
-		{
-			index = MeshData.Positions.Add(FVector3f(InPosition));
-			MeshData.Tangents.Add(FVector3f(InTangentZ), FVector3f(InTangentX));
-			MeshData.Colors.Add(InColor);
-			MeshData.TexCoords.Add(InTexCoord, 0);
-			return index;
-		}else
-		{
-			if(const int* foundIndex = IndexLookup->Find(InPosition); foundIndex != nullptr && *foundIndex >= 0 && *foundIndex < MeshData.Positions.Num() )
-			{
-				index = *foundIndex;
-				MeshData.Tangents.SetNormal(index, (MeshData.Tangents.GetNormal(index)+FVector3f(InTangentZ))/2);
-			}
-			else
-			{
-				index = MeshData.Positions.Add(FVector3f(InPosition));
-				MeshData.Tangents.Add(FVector3f(InTangentZ), FVector3f(InTangentX));
-				MeshData.Colors.Add(InColor);
-				MeshData.TexCoords.Add(InTexCoord, 0);
-				IndexLookup->Add(InPosition, index);
-			}
-			return index;
-		}
+		int32 index = MeshData.Positions.Add(FVector3f(InPosition));
+		MeshData.Tangents.Add(FVector3f(InTangentZ), FVector3f(InTangentX));
+		MeshData.Colors.Add(InColor);
+		MeshData.TexCoords.Add(InTexCoord, 0);
+		return index;
+		
 	};
 
 
@@ -236,14 +218,14 @@ void URuntimeMeshProviderChunk::AddTile(FRuntimeMeshRenderableMeshData &MeshData
 	
 	const FVector BlockVertices[8] = {
 		FVector(0.0f,	 0.0f,		0.0f),
-		FVector(BlockSize.X, 0.0f,		0.0f),
-		FVector(BlockSize.X, BlockSize.Y,	0.0f),
-		FVector(0.0f,	 BlockSize.Y,	0.0f),
+		FVector(InTileConfig.Size.X, 0.0f,		0.0f),
+		FVector(InTileConfig.Size.X, InTileConfig.Size.Y,	0.0f),
+		FVector(0.0f,	 InTileConfig.Size.Y,	0.0f),
 		
-		FVector(0.0f,	 0.0f,		BlockSize.Z),
-		FVector(BlockSize.X, 0.0f,		BlockSize.Z),
-		FVector(BlockSize.X, BlockSize.Y,	BlockSize.Z),
-		FVector(0.0f,	 BlockSize.Y,	BlockSize.Z),
+		FVector(0.0f,	 0.0f,		InTileConfig.Size.Z),
+		FVector(InTileConfig.Size.X, 0.0f,		InTileConfig.Size.Z),
+		FVector(InTileConfig.Size.X, InTileConfig.Size.Y,	InTileConfig.Size.Z),
+		FVector(0.0f,	 InTileConfig.Size.Y,	InTileConfig.Size.Z),
 	};
 
 	const TArray<FTileType>& TileTypes = Chunk->ChunkConfig.WorldConfig.TileTypes;

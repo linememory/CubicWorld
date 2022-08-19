@@ -76,31 +76,44 @@ FBoxSphereBounds URuntimeMeshProviderChunk::GetBounds()
 TArray<bool> URuntimeMeshProviderChunk::GetSidesToRender(const FIntVector InPosition, const int divider) const
 {
 	TArray<bool> SidesToRender = {true, true, true, true, true, true};
-	const int blocks = divider*divider*divider;
-	if(GetBlocks(FIntVector(InPosition.X, InPosition.Y, InPosition.Z+divider), divider).Num() >= blocks) // Top
-		{
+	const int maxBlocks = divider*divider*divider;
+	const FIntVector ChunkSize = Chunk->ChunkConfig.WorldConfig.ChunkSize;
+	if(const auto blocks = GetBlocks(FIntVector(InPosition.X, InPosition.Y, InPosition.Z+divider), divider);
+		blocks.Num() >= maxBlocks ||
+		InPosition.Z == ChunkSize.Z - divider && blocks.Num() >= ceil(divider*divider)) // Top
+	{
 		SidesToRender[0] = false;
-		}
-	if(GetBlocks(FIntVector(InPosition.X, InPosition.Y, InPosition.Z-divider), divider).Num() >= blocks) // Bottom
-		{
+	}
+	if(const auto blocks = GetBlocks(FIntVector(InPosition.X, InPosition.Y, InPosition.Z-divider), divider);
+		blocks.Num() >= maxBlocks ||
+		InPosition.Z == 0 && blocks.Num() >= ceil(divider*divider)) // Bottom
+	{
 		SidesToRender[1] = false;
-		}
-	if(GetBlocks(FIntVector(InPosition.X, InPosition.Y+divider, InPosition.Z), divider).Num() >= blocks) // Front
-		{
+	}
+	if(const auto blocks = GetBlocks(FIntVector(InPosition.X, InPosition.Y+divider, InPosition.Z), divider);
+		blocks.Num() >= maxBlocks ||
+		InPosition.Y == ChunkSize.Y - divider && blocks.Num() >= ceil(divider*divider)) // Front
+	{
 		SidesToRender[2] = false;
-		}
-	if(GetBlocks(FIntVector(InPosition.X-divider, InPosition.Y, InPosition.Z), divider).Num() >= blocks) // Left
-		{
+	}
+	if(const auto blocks = GetBlocks(FIntVector(InPosition.X-divider, InPosition.Y, InPosition.Z), divider);
+		blocks.Num() >= maxBlocks ||
+		InPosition.X == 0 && blocks.Num() >= ceil(divider*divider)) // Left
+	{
 		SidesToRender[3] = false;
-		}
-	if(GetBlocks(FIntVector(InPosition.X, InPosition.Y-divider, InPosition.Z), divider).Num() >= blocks) // Back
-		{
+	}
+	if(const auto blocks = GetBlocks(FIntVector(InPosition.X, InPosition.Y-divider, InPosition.Z), divider);
+		blocks.Num() >= maxBlocks ||
+		InPosition.Y == 0 && blocks.Num() >= ceil(divider*divider)) // Back
+	{
 		SidesToRender[4] = false;
-		}
-	if(GetBlocks(FIntVector(InPosition.X+divider, InPosition.Y, InPosition.Z), divider).Num() >= blocks) // Right
-		{
+	}
+	if(const auto blocks = GetBlocks(FIntVector(InPosition.X+divider, InPosition.Y, InPosition.Z), divider);
+		blocks.Num() >= maxBlocks ||
+		InPosition.X == ChunkSize.X - divider && blocks.Num() >= ceil(divider*divider)) // Right
+	{
 		SidesToRender[5] = false;
-		}
+	}
 	return SidesToRender;
 }
 

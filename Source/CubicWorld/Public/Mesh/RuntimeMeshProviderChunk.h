@@ -45,7 +45,6 @@ public:
 
 private:
 	void AddTile(FRuntimeMeshRenderableMeshData &MeshData, FTileConfig InTileConfig, FVector BlockSize, bool isFlatShaded = true, TMap<FVector, int32> *IndexLookup = nullptr);
-	void AddCollisionTile(FRuntimeMeshCollisionData &CollisionData, FTileConfig InTileConfig, TMap<FVector, int> *IndexLookup = nullptr);
 
 	TArray<bool> GetSidesToRender(FIntVector InPosition, int divider = 1) const;
 	TArray<FTile> GetBlocks(FIntVector InPosition, int divider = 1) const;

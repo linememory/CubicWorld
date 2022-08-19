@@ -74,9 +74,10 @@ FBoxSphereBounds URuntimeMeshProviderChunk::GetBounds()
 }
 
 TArray<bool> URuntimeMeshProviderChunk::GetSidesToRender(FIntVector InPosition, int divider) const
+TArray<bool> URuntimeMeshProviderChunk::GetSidesToRender(const FIntVector InPosition, const int divider) const
 {
 	TArray<bool> SidesToRender = {true, true, true, true, true, true};
-	int blocks = divider*divider*divider;
+	const int blocks = divider*divider*divider;
 	if(GetBlocks(FIntVector(InPosition.X, InPosition.Y, InPosition.Z+divider), divider).Num() >= blocks) // Top
 		{
 		SidesToRender[0] = false;
@@ -104,10 +105,9 @@ TArray<bool> URuntimeMeshProviderChunk::GetSidesToRender(FIntVector InPosition, 
 	return SidesToRender;
 }
 
-TArray<FTile> URuntimeMeshProviderChunk::GetBlocks(FIntVector InPosition, int divider) const
+TArray<FTile> URuntimeMeshProviderChunk::GetBlocks(const FIntVector InPosition, const int divider) const
 {
 	TArray<FTile> Tiles;
-	const FTile* Result = nullptr;
 	for (int Z = 0; Z < divider; ++Z)
 	{
 		for (int Y = 0; Y < divider; ++Y)
@@ -116,7 +116,6 @@ TArray<FTile> URuntimeMeshProviderChunk::GetBlocks(FIntVector InPosition, int di
 			{
 				if(const auto tile = Chunk->GetTiles().Find(InPosition+FIntVector(X,Y,Z)); tile != nullptr)
 				{
-					Result = tile;
 					Tiles.Add(*tile);
 				}
 			}
@@ -341,136 +340,23 @@ FRuntimeMeshCollisionSettings URuntimeMeshProviderChunk::GetCollisionSettings()
 
 bool URuntimeMeshProviderChunk::HasCollisionMesh()
 {
-	return true;
+	return false;
 }
 
 bool URuntimeMeshProviderChunk::GetCollisionMesh(FRuntimeMeshCollisionData& CollisionData)
 {
 	FScopeLock Lock(&PropertySyncRoot);
-	SCOPE_CYCLE_COUNTER(STAT_GenerateCollisionMesh);
-	SCOPED_NAMED_EVENT(URuntimeMeshProviderChunk_GenerateCollisionMesh, FColor::Green);
-
-	if(Chunk == nullptr) return false;
-	TMap<FVector, int> IndexLookup;
-	for (const TTuple<FIntVector, FTile> tile : Chunk->GetTiles())
-	{
-		if(bMarkedForDestroy)
-		{
-			break;
-		}
-		const FIntVector Position  = tile.Key;
-		const FTileConfig tileConfig = FTileConfig(GetSidesToRender(Position), tile.Value, Position);
-		AddCollisionTile(CollisionData, tileConfig, &IndexLookup);
-	}
-	// UE_LOG(LogTemp, Warning, TEXT("Chunk Collision"))
-	if(CollisionData.Triangles.Num() <= 0 || CollisionData.Vertices.Num() <= 0)
-	{
-		return false;
-	}
-	return true;
-}
-
-void URuntimeMeshProviderChunk::AddCollisionTile(FRuntimeMeshCollisionData& CollisionData, FTileConfig InTileConfig, TMap<FVector, int>* IndexLookup)
-{
-	FScopeLock Lock(&PropertySyncRoot);
 	SCOPE_CYCLE_COUNTER(STAT_GenerateTileCollisionMesh);
-	SCOPED_NAMED_EVENT(URuntimeMeshProviderChunk_GenerateTileCollisionMesh, FColor::Green);
-	
-	auto AddVertex = [&](const FVector& InPosition)
-	{
 		if(IndexLookup == nullptr)
 			return CollisionData.Vertices.Add(FVector3f(InPosition));
 		
 		if(const int* foundIndex = IndexLookup->Find(InPosition); foundIndex != nullptr && *foundIndex >= 0 && *foundIndex < CollisionData.Vertices.Num() )
 		{
-			return *foundIndex;
-		}
 		const int index = CollisionData.Vertices.Add(FVector3f(InPosition));
 		IndexLookup->Add(InPosition, index);
 		return index;
 	};
-		
-	const FVector& BlockSize = Chunk->ChunkConfig.WorldConfig.BlockSize;
-
-	const FVector BlockVertices[8] = {
-		FVector(0.0f,	 0.0f,			BlockSize.Z),
-		FVector(0.0f,	 -BlockSize.Y,	BlockSize.Z),
-		FVector(BlockSize.X, -BlockSize.Y,	BlockSize.Z),
-		FVector(BlockSize.X, 0.0f,			BlockSize.Z),
-
-		FVector(0.0f,	 0.0f,			0.0f),
-		FVector(0.0f,	 -BlockSize.Y,	0.0f),
-		FVector(BlockSize.X, -BlockSize.Y,	0.0f),
-		FVector(BlockSize.X, 0.0f,			0.0f),
-	};
-	
-	const FVector position = FVector(InTileConfig.Position.X, InTileConfig.Position.Y, InTileConfig.Position.Z) - FVector(GetBounds().BoxExtent.X,GetBounds().BoxExtent.Y,0.0f);
-	
-	if(InTileConfig.SidesTORender[0]) // Top
-	{
-		const int idx0 = AddVertex(BlockVertices[0]+position);
-		const int idx1 = AddVertex(BlockVertices[1]+position);
-		const int idx2 = AddVertex(BlockVertices[2]+position);
-		const int idx3 = AddVertex(BlockVertices[3]+position);
-
-		CollisionData.Triangles.Add(idx0, idx2, idx1);
-		CollisionData.Triangles.Add(idx0, idx3, idx2);
-	}
-	
-	if(InTileConfig.SidesTORender[1]) // Bottom
-	{
-		const int idx0 = AddVertex(BlockVertices[5]+position);
-		const int idx1 = AddVertex(BlockVertices[4]+position);
-		const int idx2 = AddVertex(BlockVertices[7]+position);
-		const int idx3 = AddVertex(BlockVertices[6]+position);
-
-		CollisionData.Triangles.Add(idx0, idx2, idx1);
-		CollisionData.Triangles.Add(idx0, idx3, idx2);
-	}
-	
-	if(InTileConfig.SidesTORender[2]) // Front
-	{
-		const int idx0 = AddVertex(BlockVertices[4]+position);
-		const int idx1 = AddVertex(BlockVertices[0]+position);
-		const int idx2 = AddVertex(BlockVertices[3]+position);
-		const int idx3 = AddVertex(BlockVertices[7]+position);
-
-		CollisionData.Triangles.Add(idx0, idx2, idx1);
-		CollisionData.Triangles.Add(idx0, idx3, idx2);
-	}
-
-	if(InTileConfig.SidesTORender[3]) // Left
-	{
-		const int idx0 = AddVertex(BlockVertices[5]+position);
-		const int idx1 = AddVertex(BlockVertices[1]+position);
-		const int idx2 = AddVertex(BlockVertices[0]+position);
-		const int idx3 = AddVertex(BlockVertices[4]+position);
-
-		CollisionData.Triangles.Add(idx0, idx2, idx1);
-		CollisionData.Triangles.Add(idx0, idx3, idx2);
-	}
-
-	if(InTileConfig.SidesTORender[4]) // Back
-	{
-		const int idx0 = AddVertex(BlockVertices[6]+position);
-		const int idx1 = AddVertex(BlockVertices[2]+position);
-		const int idx2 = AddVertex(BlockVertices[1]+position);
-		const int idx3 = AddVertex(BlockVertices[5]+position);
-
-		CollisionData.Triangles.Add(idx0, idx2, idx1);
-		CollisionData.Triangles.Add(idx0, idx3, idx2);
-	}
-
-	if(InTileConfig.SidesTORender[5]) // Right
-	{
-		const int idx0 = AddVertex(BlockVertices[7]+position);
-		const int idx1 = AddVertex(BlockVertices[3]+position);
-		const int idx2 = AddVertex(BlockVertices[2]+position);
-		const int idx3 = AddVertex(BlockVertices[6]+position);
-
-		CollisionData.Triangles.Add(idx0, idx2, idx1);
-		CollisionData.Triangles.Add(idx0, idx3, idx2);
-	}
+	return false;
 }
 
 bool URuntimeMeshProviderChunk::IsThreadSafe()

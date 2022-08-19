@@ -43,4 +43,9 @@ struct FWorldConfig
 										ChunkSize.Y * BlockSize.Y,
 										ChunkSize.Z * BlockSize.Z);
 	}
+
+	uint32 GetMaxBlocks() const
+	{
+		return BlockSize.X * BlockSize.Y * BlockSize.Z;
+	}
 };

@@ -192,9 +192,6 @@ bool URuntimeMeshProviderChunk::GetSectionMeshForLOD(const int32 LODIndex, const
 	{
 		return false;
 	}
-	int32 vertices = MeshData.Positions.Num();
-	int32 triangles = MeshData.Triangles.Num();
-	UE_LOG(LogTemp, Warning, TEXT("Vertices: %d - Triangles: %d"), vertices, triangles)
 	return true;
 }
 
@@ -205,7 +202,7 @@ void URuntimeMeshProviderChunk::AddTile(FRuntimeMeshRenderableMeshData &MeshData
 	SCOPED_NAMED_EVENT(URuntimeMeshProviderChunk_GenerateTileMesh, FColor::Green);
 	auto AddVertex = [&](const FVector& InPosition, const FVector& InTangentX, const FVector& InTangentZ, const FVector2f& InTexCoord, const FColor& InColor = FColor::White)
 	{
-		int32 index = MeshData.Positions.Add(FVector3f(InPosition));
+		const int32 index = MeshData.Positions.Add(FVector3f(InPosition));
 		MeshData.Tangents.Add(FVector3f(InTangentZ), FVector3f(InTangentX));
 		MeshData.Colors.Add(InColor);
 		MeshData.TexCoords.Add(InTexCoord, 0);

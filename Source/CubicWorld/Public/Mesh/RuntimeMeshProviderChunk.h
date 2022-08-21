@@ -45,6 +45,7 @@ public:
 
 private:
 	void AddTile(FRuntimeMeshRenderableMeshData &MeshData, const FBlockConfig& InTileConfig);
+	void GreedyMesh(FRuntimeMeshRenderableMeshData& MeshData);
 	
 	FSides GetSidesToRender(FIntVector InPosition, int divider = 1) const;
 	TArray<FTile> GetBlocks(FIntVector InPosition, int divider = 1) const;

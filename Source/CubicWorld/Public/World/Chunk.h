@@ -11,7 +11,7 @@
 /**
  *
  */
-UCLASS()
+UCLASS(BlueprintType, Blueprintable)
 class CUBICWORLD_API UChunk final : public UObject
 {
 	GENERATED_BODY()

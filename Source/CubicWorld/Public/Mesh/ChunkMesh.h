@@ -9,7 +9,7 @@
 #include "World/Chunk.h"
 #include "ChunkMesh.generated.h"
 
-UCLASS()
+UCLASS(BlueprintType, Blueprintable)
 class CUBICWORLD_API AChunkMesh final : public AActor
 {
 	GENERATED_BODY()

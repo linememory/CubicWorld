@@ -79,11 +79,12 @@ bool URuntimeMeshProviderChunk::GetSectionMeshForLOD(const int32 LODIndex, const
 	return true;
 }
 
-uint32 URuntimeMeshProviderChunk::AddVertex(FRuntimeMeshRenderableMeshData& MeshData, const FVector& InPosition, const FVector& InTangentX,
-	const FVector& InTangentZ, const FVector2f& InUV, const FVector2f& InTexCoord, const FColor& InColor)
+uint32 URuntimeMeshProviderChunk::AddVertex(FRuntimeMeshRenderableMeshData& MeshData, const FVector& InPosition,
+	const FVector& InNormal, const FVector& InTangent,
+	const FVector2f& InUV, const FVector2f& InTexCoord, const FColor& InColor)
 {
 	const int32 index = MeshData.Positions.Add(FVector3f(InPosition));
-	MeshData.Tangents.Add(FVector3f(InTangentZ), FVector3f(InTangentX));
+	MeshData.Tangents.Add(FVector3f(InNormal), FVector3f(InTangent));
 	MeshData.Colors.Add(InColor);
 	MeshData.TexCoords.Add({InUV, InTexCoord});
 	return index;
@@ -94,10 +95,10 @@ void URuntimeMeshProviderChunk::AddQuad(FRuntimeMeshRenderableMeshData& MeshData
 	const FVector& Normal, const FVector& Tangent, const FVector2f TextureOffset,
 	const FVector2f UVMultiplication, const FColor& Color)
 {
-	const int32 idx0 = AddVertex(MeshData, Vertex1, Tangent, Normal, FVector2f(0, 1)*UVMultiplication,	TextureOffset, Color);
-	const int32 idx1 = AddVertex(MeshData, Vertex2, Tangent, Normal, FVector2f(0)*UVMultiplication, 		TextureOffset, Color);
-	const int32 idx2 = AddVertex(MeshData, Vertex3, Tangent, Normal, FVector2f(1,0)*UVMultiplication,	TextureOffset, Color);
-	const int32 idx3 = AddVertex(MeshData, Vertex4, Tangent, Normal, FVector2f(1)*UVMultiplication,	TextureOffset, Color);
+	const int32 idx0 = AddVertex(MeshData, Vertex1, Normal, Tangent, FVector2f(0, 1)*UVMultiplication,	TextureOffset, Color);
+	const int32 idx1 = AddVertex(MeshData, Vertex2, Normal, Tangent, FVector2f(0)*UVMultiplication, 		TextureOffset, Color);
+	const int32 idx2 = AddVertex(MeshData, Vertex3, Normal, Tangent, FVector2f(1,0)*UVMultiplication,	TextureOffset, Color);
+	const int32 idx3 = AddVertex(MeshData, Vertex4, Normal, Tangent, FVector2f(1)*UVMultiplication,	TextureOffset, Color);
 					
 	MeshData.Triangles.AddTriangle(idx0, idx2, idx1);
 	MeshData.Triangles.AddTriangle(idx0, idx3, idx2);
@@ -168,7 +169,7 @@ void URuntimeMeshProviderChunk::GreedyMesh(FRuntimeMeshRenderableMeshData& MeshD
 				FSides sides = GetSidesToRender(BlockPosition);
 
 				//Top
-				if(block != nullptr && sides.Top && !Top.visited.Find(BlockPosition))
+				if(block != nullptr && sides.HasSide(FSides::Top) && !Top.visited.Find(BlockPosition))
 				{
 					FIntVector tempEnd;
 					Top.active = true;
@@ -193,7 +194,7 @@ void URuntimeMeshProviderChunk::GreedyMesh(FRuntimeMeshRenderableMeshData& MeshD
 							FIntVector BlockPosition2(X+Xs, Y+Ys, Z);
 							const FTile* block2 = Chunk->GetTiles().Find(BlockPosition2);
 							const FSides sides2 = GetSidesToRender(BlockPosition2);
-							if(block2 != nullptr && *block2 == Top.block && sides2.Top && !Top.visited.Find(BlockPosition2))
+							if(block2 != nullptr && *block2 == Top.block && sides2.HasSide(FSides::Top) && !Top.visited.Find(BlockPosition2))
 							{
 								tempEnd = BlockPosition2;
 								if(Ys >= WorldConfig.ChunkSize.Y - Y-1 && (Xs >= WorldConfig.ChunkSize.X - X-1 || Xs >= xBreakIndex-1))
@@ -254,7 +255,7 @@ void URuntimeMeshProviderChunk::GreedyMesh(FRuntimeMeshRenderableMeshData& MeshD
 				}
 
 				//Bottom
-				if(block != nullptr && sides.Bottom && !Bottom.visited.Find(BlockPosition))
+				if(block != nullptr && sides.HasSide(FSides::Bottom) && !Bottom.visited.Find(BlockPosition))
 				{
 					FIntVector tempEnd;
 					Bottom.active = true;
@@ -279,7 +280,7 @@ void URuntimeMeshProviderChunk::GreedyMesh(FRuntimeMeshRenderableMeshData& MeshD
 							FIntVector BlockPosition2(X+Xs, Y+Ys, Z);
 							const FTile* block2 = Chunk->GetTiles().Find(BlockPosition2);
 							const FSides sides2 = GetSidesToRender(BlockPosition2);
-							if(block2 != nullptr && *block2 == Bottom.block && sides2.Bottom && !Bottom.visited.Find(BlockPosition2))
+							if(block2 != nullptr && *block2 == Bottom.block && sides2.HasSide(FSides::Bottom) && !Bottom.visited.Find(BlockPosition2))
 							{
 								tempEnd = BlockPosition2;
 								if(Ys >= WorldConfig.ChunkSize.Y - Y-1 && (Xs >= WorldConfig.ChunkSize.X - X-1 || Xs >= xBreakIndex-1))
@@ -340,7 +341,7 @@ void URuntimeMeshProviderChunk::GreedyMesh(FRuntimeMeshRenderableMeshData& MeshD
 
 
 				// Front
-				if(block != nullptr && sides.Front && !Front.visited.Find(BlockPosition))
+				if(block != nullptr && sides.HasSide(FSides::Front) && !Front.visited.Find(BlockPosition))
 				{
 					FIntVector tempEnd;
 					Front.active = true;
@@ -365,7 +366,7 @@ void URuntimeMeshProviderChunk::GreedyMesh(FRuntimeMeshRenderableMeshData& MeshD
 							FIntVector BlockPosition2(X+Xs, Y, Z+Zs);
 							const FTile* block2 = Chunk->GetTiles().Find(BlockPosition2);
 							const FSides sides2 = GetSidesToRender(BlockPosition2);
-							if(block2 != nullptr && *block2 == Front.block && sides2.Front && !Front.visited.Find(BlockPosition2))
+							if(block2 != nullptr && *block2 == Front.block && sides2.HasSide(FSides::Front) && !Front.visited.Find(BlockPosition2))
 							{
 								tempEnd = BlockPosition2;
 								if(Zs >= WorldConfig.ChunkSize.Z - Z-1 && (Xs >= WorldConfig.ChunkSize.X - X-1 || Xs >= xBreakIndex-1))
@@ -425,7 +426,7 @@ void URuntimeMeshProviderChunk::GreedyMesh(FRuntimeMeshRenderableMeshData& MeshD
 				}
 
 				// Back
-				if(block != nullptr && sides.Back && !Back.visited.Find(BlockPosition))
+				if(block != nullptr && sides.HasSide(FSides::Back) && !Back.visited.Find(BlockPosition))
 				{
 					FIntVector tempEnd;
 					Back.active = true;
@@ -450,7 +451,7 @@ void URuntimeMeshProviderChunk::GreedyMesh(FRuntimeMeshRenderableMeshData& MeshD
 							FIntVector BlockPosition2(X+Xs, Y, Z+Zs);
 							const FTile* block2 = Chunk->GetTiles().Find(BlockPosition2);
 							const FSides sides2 = GetSidesToRender(BlockPosition2);
-							if(block2 != nullptr && *block2 == Back.block && sides2.Back && !Back.visited.Find(BlockPosition2))
+							if(block2 != nullptr && *block2 == Back.block && sides2.HasSide(FSides::Back) && !Back.visited.Find(BlockPosition2))
 							{
 								tempEnd = BlockPosition2;
 								if(Zs >= WorldConfig.ChunkSize.Z - Z-1 && (Xs >= WorldConfig.ChunkSize.X - X-1 || Xs >= xBreakIndex-1))
@@ -510,7 +511,7 @@ void URuntimeMeshProviderChunk::GreedyMesh(FRuntimeMeshRenderableMeshData& MeshD
 				}
 
 				// Right
-				if(block != nullptr && sides.Right && !Right.visited.Find(BlockPosition))
+				if(block != nullptr && sides.HasSide(FSides::Right) && !Right.visited.Find(BlockPosition))
 				{
 					FIntVector tempEnd;
 					Right.active = true;
@@ -535,7 +536,7 @@ void URuntimeMeshProviderChunk::GreedyMesh(FRuntimeMeshRenderableMeshData& MeshD
 							FIntVector BlockPosition2(X, Y+Ys, Z+Zs);
 							const FTile* block2 = Chunk->GetTiles().Find(BlockPosition2);
 							const FSides sides2 = GetSidesToRender(BlockPosition2);
-							if(block2 != nullptr && *block2 == Right.block && sides2.Right && !Right.visited.Find(BlockPosition2))
+							if(block2 != nullptr && *block2 == Right.block && sides2.HasSide(FSides::Right) && !Right.visited.Find(BlockPosition2))
 							{
 								tempEnd = BlockPosition2;
 								if(Zs >= WorldConfig.ChunkSize.Z - Z-1 && (Ys >= WorldConfig.ChunkSize.Y - Y-1 || Ys >= yBreakIndex-1))
@@ -596,7 +597,7 @@ void URuntimeMeshProviderChunk::GreedyMesh(FRuntimeMeshRenderableMeshData& MeshD
 				}
 
 				// Left
-				if(block != nullptr && sides.Left && !Left.visited.Find(BlockPosition))
+				if(block != nullptr && sides.HasSide(FSides::Left) && !Left.visited.Find(BlockPosition))
 				{
 					FIntVector tempEnd;
 					Left.active = true;
@@ -621,7 +622,7 @@ void URuntimeMeshProviderChunk::GreedyMesh(FRuntimeMeshRenderableMeshData& MeshD
 							FIntVector BlockPosition2(X, Y+Ys, Z+Zs);
 							const FTile* block2 = Chunk->GetTiles().Find(BlockPosition2);
 							const FSides sides2 = GetSidesToRender(BlockPosition2);
-							if(block2 != nullptr && *block2 == Left.block && sides2.Left && !Left.visited.Find(BlockPosition2))
+							if(block2 != nullptr && *block2 == Left.block && sides2.HasSide(FSides::Left) && !Left.visited.Find(BlockPosition2))
 							{
 								tempEnd = BlockPosition2;
 								if(Zs >= WorldConfig.ChunkSize.Z - Z-1 && (Ys >= WorldConfig.ChunkSize.Y - Y-1 || Ys >= yBreakIndex-1))
@@ -748,37 +749,37 @@ FSides URuntimeMeshProviderChunk::GetSidesToRender(const FIntVector InPosition, 
 		blocks.Num() >= maxBlocks ||
 		InPosition.Z == ChunkSize.Z - divider && blocks.Num() >= ceil(divider*divider)) // Top
 	{
-		SidesToRender.Top = false;
+		SidesToRender.SetSide(FSides::Top, true);
 	}
 	if(const auto blocks = GetBlocks(FIntVector(InPosition.X, InPosition.Y, InPosition.Z-divider), divider);
 		blocks.Num() >= maxBlocks ||
 		InPosition.Z == 0 && blocks.Num() >= ceil(divider*divider)) // Bottom
 	{
-		SidesToRender.Bottom = false;
+		SidesToRender.SetSide(FSides::Bottom, true);
 	}
 	if(const auto blocks = GetBlocks(FIntVector(InPosition.X, InPosition.Y+divider, InPosition.Z), divider);
 		blocks.Num() >= maxBlocks ||
 		InPosition.Y == ChunkSize.Y - divider && blocks.Num() >= ceil(divider*divider)) // Front
 	{
-		SidesToRender.Front = false;
+		SidesToRender.SetSide(FSides::Front, true);
 	}
 	if(const auto blocks = GetBlocks(FIntVector(InPosition.X-divider, InPosition.Y, InPosition.Z), divider);
 		blocks.Num() >= maxBlocks ||
 		InPosition.X == 0 && blocks.Num() >= ceil(divider*divider)) // Left
 	{
-		SidesToRender.Left = false;
+		SidesToRender.SetSide(FSides::Left, true);
 	}
 	if(const auto blocks = GetBlocks(FIntVector(InPosition.X, InPosition.Y-divider, InPosition.Z), divider);
 		blocks.Num() >= maxBlocks ||
 		InPosition.Y == 0 && blocks.Num() >= ceil(divider*divider)) // Back
 	{
-		SidesToRender.Back = false;
+		SidesToRender.SetSide(FSides::Back, true);
 	}
 	if(const auto blocks = GetBlocks(FIntVector(InPosition.X+divider, InPosition.Y, InPosition.Z), divider);
 		blocks.Num() >= maxBlocks ||
 		InPosition.X == ChunkSize.X - divider && blocks.Num() >= ceil(divider*divider)) // Right
 	{
-		SidesToRender.Right = false;
+		SidesToRender.SetSide(FSides::Right, true);
 	}
 	return SidesToRender;
 }
@@ -824,104 +825,89 @@ void URuntimeMeshProviderChunk::AddTile(FRuntimeMeshRenderableMeshData &MeshData
 	FVector position = FVector(InTileConfig.Position)*Chunk->ChunkConfig.WorldConfig.BlockSize - FVector(GetBounds().BoxExtent.X,GetBounds().BoxExtent.Y,0.0f);
 
 	// Top
-	if(InTileConfig.SidesToRender.Top) 
+	if(InTileConfig.SidesToRender.HasSide(FSides::Top)) 
 	{
-		Normal = FVector(0.0f, 0.0f, 1.0f);
-		Tangent = FVector(1.0f, 0.0f, 0.0f);
 		AddQuad(MeshData,
 			BlockVertices[7]+position,
 			BlockVertices[4]+position,
 			BlockVertices[5]+position,
 			BlockVertices[6]+position,
-			Tangent, Normal,
+			{0.0f, 0.0f, 1.0f}, {1.0f, 0.0f, 0.0f},
 			textureOffset, {1,1},
 			Color
 			);
 	}
 
 	// Bottom
-	if(InTileConfig.SidesToRender.Bottom) 
+	if(InTileConfig.SidesToRender.HasSide(FSides::Bottom)) 
 	{
-		Normal = FVector(0.0f, 0.0f, -1.0f);
-		Tangent = FVector(-1.0f, 0.0f, 0.0f);
 		AddQuad(MeshData,
 			BlockVertices[0]+position,
 			BlockVertices[3]+position,
 			BlockVertices[2]+position,
 			BlockVertices[1]+position,
-			Tangent, Normal,
+			{0.0f, 0.0f, -1.0f}, {-1.0f, 0.0f, 0.0f},
 			textureOffset, {1,1},
 			Color
 			);
 	}
 
 	// Front
-	if(InTileConfig.SidesToRender.Front) 
+	if(InTileConfig.SidesToRender.HasSide(FSides::Front)) 
 	{
-		Normal = FVector(0.0f, 1.0f, 0.0f);
-		Tangent = FVector(1.0f, 0.0f, 0.0f);
 		AddQuad(MeshData,
 			BlockVertices[3]+position,
 			BlockVertices[7]+position,
 			BlockVertices[6]+position,
 			BlockVertices[2]+position,
-			Tangent, Normal,
+			{0.0f, 1.0f, 0.0f}, {1.0f, 0.0f, 0.0f},
 			textureOffset, {1,1},
 			Color
 			);
 	}
 
 	// Back
-	if(InTileConfig.SidesToRender.Back) 
+	if(InTileConfig.SidesToRender.HasSide(FSides::Back)) 
 	{
-		Normal = FVector(0.0f, -1.0f, 0.0f);
-		Tangent = FVector(-1.0f, 0.0f, 0.0f);
 		AddQuad(MeshData,
 			BlockVertices[1]+position,
 			BlockVertices[5]+position,
 			BlockVertices[4]+position,
 			BlockVertices[0]+position,
-			Tangent, Normal,
+			{0.0f, -1.0f, 0.0f}, {-1.0f, 0.0f, 0.0f},
 			textureOffset, {1,1},
 			Color
 			);
 	}
 
 	// Right
-	if(InTileConfig.SidesToRender.Right) 
+	if(InTileConfig.SidesToRender.HasSide(FSides::Right)) 
 	{
-		Normal = FVector(1.0f, 0.0f, 0.0f);
-		Tangent = FVector(0.0f, -1.0f, 0.0f);
 		AddQuad(MeshData,
 			BlockVertices[2]+position,
 			BlockVertices[6]+position,
 			BlockVertices[5]+position,
 			BlockVertices[1]+position,
-			Tangent, Normal,
+			{1.0f, 0.0f, 0.0f}, {0.0f, -1.0f, 0.0f},
 			textureOffset, {1,1},
 			Color
 			);
 	}
 
 	// Left
-	if(InTileConfig.SidesToRender.Left) 
+	if(InTileConfig.SidesToRender.HasSide(FSides::Left)) 
 	{
-		Normal = FVector(-1.0f, 0.0f, 0.0f);
-		Tangent = FVector(0.0f, 1.0f, 0.0f);
 		AddQuad(MeshData,
 			BlockVertices[0]+position,
 			BlockVertices[4]+position,
 			BlockVertices[7]+position,
 			BlockVertices[3]+position,
-			Tangent, Normal,
+			{-1.0f, 0.0f, 0.0f}, {0.0f, 1.0f, 0.0f},
 			textureOffset, {1,1},
 			Color
 			);
 	}
 }
-
-
-
 
 void URuntimeMeshProviderChunk::SetHasCollision(const bool bInHasCollision)
 {

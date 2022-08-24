@@ -24,6 +24,8 @@ struct FTileType
 	uint8 TextureId = 0;
 	UPROPERTY(BlueprintReadWrite, EditAnywhere)
 	uint8 SideTextureId = 0;
+	UPROPERTY(BlueprintReadWrite, EditAnywhere)
+	uint8 BottomTextureId = 0;
 
 	UPROPERTY(BlueprintReadWrite, EditAnywhere)
 	FColor Color = FColor::Magenta;

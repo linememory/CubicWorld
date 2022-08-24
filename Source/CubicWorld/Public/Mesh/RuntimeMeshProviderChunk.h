@@ -28,6 +28,9 @@ private:
 	UPROPERTY(BlueprintGetter = GetChunk, BlueprintSetter = SetChunk)
 	const UChunk *Chunk;
 
+	UPROPERTY()
+	TArray<FVector> BlockVertices;
+
 public:
 	UFUNCTION(Category = "RuntimeMesh|Providers|Box", BlueprintCallable)
 	bool GetHasCollision() const;
@@ -45,9 +48,14 @@ public:
 
 private:
 	void AddTile(FRuntimeMeshRenderableMeshData &MeshData, const FBlockConfig& InTileConfig);
-	void GreedyMesh(FRuntimeMeshRenderableMeshData& MeshData, bool bIsSingleAxis = false);
-	void GreedyMeshSingleAxis(FRuntimeMeshRenderableMeshData& MeshData);
-	void SimpleMesh(FRuntimeMeshRenderableMeshData& MeshData);
+	static uint32 AddVertex(FRuntimeMeshRenderableMeshData& MeshData, const FVector& InPosition, const FVector& InTangentX, const FVector& InTangentZ, const FVector2f& InUV, const FVector2f& InTexCoord, const FColor& InColor = FColor::White);
+	static void AddQuad(FRuntimeMeshRenderableMeshData &MeshData, const FVector& Vertex1, const FVector& Vertex2, const FVector& Vertex3, const FVector& Vertex4,
+					const FVector& Normal, const FVector& Tangent,
+					const FVector2f TextureOffset, const FVector2f UVMultiplication,
+					const FColor& Color);
+	void GreedyMesh(FRuntimeMeshRenderableMeshData& MeshData);
+	void GreedyMesh(FRuntimeMeshRenderableMeshData& MeshData, uint32 LODIndex);
+	void SimpleMesh(FRuntimeMeshRenderableMeshData& MeshData, uint32 LODIndex);
 	
 	FSides GetSidesToRender(FIntVector InPosition, int divider = 1) const;
 	TArray<FTile> GetBlocks(FIntVector InPosition, int divider = 1) const;
@@ -81,9 +89,9 @@ struct FSides
 struct FBlockConfig
 {
 	FIntVector Position;
-	FSides SidesTORender;
+	FSides SidesToRender;
 	FVector Size;
 	FTile Tile;
 
-	FBlockConfig(FSides& InNeighbors, const FTile& InTile, const FIntVector& InPosition, const FVector& InSize) : Position(InPosition), SidesTORender{InNeighbors}, Size(InSize), Tile(InTile) {};
+	FBlockConfig(FSides& InNeighbors, const FTile& InTile, const FIntVector& InPosition, const FVector& InSize) : Position(InPosition), SidesToRender{InNeighbors}, Size(InSize), Tile(InTile) {};
 };

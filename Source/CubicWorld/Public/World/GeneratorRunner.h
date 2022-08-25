@@ -24,7 +24,8 @@ public:
 
 private:
 	FRunnableThread *Thread;
-	bool bRunThread;
+	bool bShouldRun = true;
+	bool bHasStopped = false;
 
 	UGenerator *const Generator;
 	FWorldConfig WorldConfig;

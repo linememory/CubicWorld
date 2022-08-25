@@ -28,7 +28,7 @@ FGeneratorRunner::~FGeneratorRunner()
 
 bool FGeneratorRunner::Init()
 {
-	bRunThread = true;
+	bShouldRun = true;
 	return true;
 }
 
@@ -36,7 +36,7 @@ uint32 FGeneratorRunner::Run()
 {
 	LLM_SCOPE(ELLMTag::Landscape);
 	if(Generator == nullptr) return -1;
-	while (bRunThread)
+	while (bShouldRun)
 	{
 		if(!Tasks.IsEmpty())
 		{
@@ -54,13 +54,19 @@ uint32 FGeneratorRunner::Run()
 		}
 	}
 	UE_LOG(LogTemp, Warning, TEXT("Generator runner stopped"))
+	bHasStopped = true;
 	return 0;
 }
 
 void FGeneratorRunner::Stop()
 {
-	bRunThread = false;
-	
+	Tasks.Empty();
+	Results.Empty();
+	bShouldRun = false;
+	while(!bHasStopped)
+	{
+		
+	}
 }
 
 

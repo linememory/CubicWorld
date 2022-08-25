@@ -62,8 +62,6 @@ void AWorldManager::BeginDestroy()
 	if(GeneratorRunner != nullptr)
 	{
 		GeneratorRunner->Stop();
-		GeneratorRunner->Tasks.Empty();
-		GeneratorRunner->Results.Empty();
 		GeneratorRunner->Exit();
 	}
 	for (const auto chunkMesh : ChunkMeshes)

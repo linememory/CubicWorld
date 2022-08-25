@@ -4,11 +4,9 @@
 #include "World/Generator.h"
 
 
-TMap<FIntVector, FTile> UGenerator::GenerateChunk(FChunkConfig ChunkConfig, TMap<FIntVector, FTile> InTiles)
+void UGenerator::GenerateChunk(const FChunkConfig& ChunkConfig, TMap<FIntVector, FTile>& Tiles)
 {
-	TMap<FIntVector, FTile> tiles;
-	const uint16 MaxHeight = ChunkConfig.WorldConfig.GetWorldBlockHeight();
-	bool hasGeometry = InTiles.Num() > 0 ? true : false;
+	bool hasGeometry = Tiles.Num() > 0 ? true : false;
 	for (int X = -1; X < ChunkConfig.WorldConfig.ChunkSize.X+1; ++X)
 	{
 		for (int Y = -1; Y < ChunkConfig.WorldConfig.ChunkSize.Y+1; ++Y)
@@ -17,23 +15,19 @@ TMap<FIntVector, FTile> UGenerator::GenerateChunk(FChunkConfig ChunkConfig, TMap
 			for (int Z = -1; Z < ChunkConfig.WorldConfig.ChunkSize.Z+1; ++Z)
 			{
 				const FIntVector WorldPosition = FIntVector(X + ChunkPosition.X, Y + ChunkPosition.Y, Z + ChunkPosition.Z);
-				if(auto tile = InTiles.Find(FIntVector(X,Y,Z)); tile != nullptr)
+				if(const auto tile = Tiles.Find(FIntVector(X,Y,Z)); tile != nullptr)
 				{
-					if(tile->TileID != 255)
+					if(!hasGeometry && !(
+					X < 0 || X >= ChunkConfig.WorldConfig.ChunkSize.X ||
+					Y < 0 || Y >= ChunkConfig.WorldConfig.ChunkSize.Y ||
+					Z < 0 || Z >= ChunkConfig.WorldConfig.ChunkSize.Z) )
 					{
-						tiles.Add(FIntVector(X,Y,Z), *tile);
-						if(!hasGeometry && !(
-						X < 0 || X >= ChunkConfig.WorldConfig.ChunkSize.X ||
-						Y < 0 || Y >= ChunkConfig.WorldConfig.ChunkSize.Y ||
-						Z < 0 || Z >= ChunkConfig.WorldConfig.ChunkSize.Z) )
-						{
-							hasGeometry = true;
-						}
+						hasGeometry = true;
 					}
 				}
 				else if(TOptional<FTile> tileOrEmpty = GetTile(WorldPosition, ChunkConfig.WorldConfig); tileOrEmpty.IsSet())
 				{
-					tiles.Add(FIntVector(X,Y,Z), tileOrEmpty.GetValue());
+					Tiles.Add(FIntVector(X,Y,Z), tileOrEmpty.GetValue());
 					if(!hasGeometry && !(
 						X < 0 || X >= ChunkConfig.WorldConfig.ChunkSize.X ||
 						Y < 0 || Y >= ChunkConfig.WorldConfig.ChunkSize.Y ||
@@ -45,5 +39,4 @@ TMap<FIntVector, FTile> UGenerator::GenerateChunk(FChunkConfig ChunkConfig, TMap
 			}
 		}	
 	}
-	return hasGeometry ? tiles : TMap<FIntVector, FTile>();
 }

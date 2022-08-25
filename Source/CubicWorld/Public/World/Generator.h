@@ -17,9 +17,9 @@ class CUBICWORLD_API UGenerator : public UObject
 	GENERATED_BODY()
 public:
 	UFUNCTION()
-	TMap<FIntVector, FTile> GenerateChunk(FChunkConfig ChunkConfig, TMap<FIntVector, FTile> InTiles = {});
+	void GenerateChunk(const FChunkConfig& ChunkConfig, TMap<FIntVector, FTile>& Tiles);
 	
-	virtual TOptional<FTile> GetTile(const FIntVector &Position, FWorldConfig &WorldConfig)
+	virtual TOptional<FTile> GetTile(const FIntVector &Position, const FWorldConfig &WorldConfig)
 	{
 		return TOptional<FTile>();
 	}

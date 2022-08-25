@@ -45,7 +45,8 @@ uint32 FGeneratorRunner::Run()
 			TPair<FIntVector, TMap<FIntVector, FTile>> task;
 			Tasks.Dequeue(task);
 			FChunkConfig chunkConfig = FChunkConfig(WorldConfig, task.Key);
-			TMap<FIntVector, FTile> tiles = Generator->GenerateChunk(chunkConfig, task.Value);
+			TMap<FIntVector, FTile> tiles = task.Value;
+			Generator->GenerateChunk(chunkConfig, tiles);
 			TPair<FIntVector, TMap<FIntVector, FTile>> result;
 			result.Key = task.Key;
 			result.Value = tiles;
@@ -59,6 +60,7 @@ uint32 FGeneratorRunner::Run()
 void FGeneratorRunner::Stop()
 {
 	bRunThread = false;
+	
 }
 
 

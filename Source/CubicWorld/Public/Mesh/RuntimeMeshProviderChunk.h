@@ -28,6 +28,9 @@ private:
 	UPROPERTY(BlueprintGetter = GetChunk, BlueprintSetter = SetChunk)
 	const UChunk *Chunk;
 
+	UPROPERTY()
+	TArray<FVector> BlockVertices;
+
 public:
 	UFUNCTION(Category = "RuntimeMesh|Providers|Box", BlueprintCallable)
 	bool GetHasCollision() const;
@@ -45,6 +48,14 @@ public:
 
 private:
 	void AddTile(FRuntimeMeshRenderableMeshData &MeshData, const FBlockConfig& InTileConfig);
+	static uint32 AddVertex(FRuntimeMeshRenderableMeshData& MeshData, const FVector& InPosition, const FVector& InNormal, const FVector& InTangent, const FVector2f& InUV, const FVector2f& InTexCoord, const FColor& InColor = FColor::White);
+	static void AddQuad(FRuntimeMeshRenderableMeshData &MeshData, const FVector& Vertex1, const FVector& Vertex2, const FVector& Vertex3, const FVector& Vertex4,
+					const FVector& Normal, const FVector& Tangent,
+					const FVector2f TextureOffset, const FVector2f UVMultiplication,
+					const FColor& Color);
+	void GreedyMesh(FRuntimeMeshRenderableMeshData& MeshData);
+	void GreedyMesh(FRuntimeMeshRenderableMeshData& MeshData, uint32 LODIndex);
+	void SimpleMesh(FRuntimeMeshRenderableMeshData& MeshData, uint32 LODIndex);
 	
 	FSides GetSidesToRender(FIntVector InPosition, int divider = 1) const;
 	TArray<FTile> GetBlocks(FIntVector InPosition, int divider = 1) const;
@@ -62,25 +73,71 @@ protected:
 
 struct FSides
 {
-	bool Top = false;		// Z+
-	bool Bottom = false;	// Z-
-	bool Front = false;		// Y+
-	bool Back = false;		// Y-
-	bool Right = false;		// X+
-	bool Left = false;		// X-
+	uint8 Sides = 0x00000000;
+
+	enum ESide
+	{
+		Top		= 1,
+		Bottom	= Top << 1,
+		Front	= Top << 2,
+		Back	= Top << 3,
+		Right	= Top << 4,
+		Left	= Top << 5
+	};
 
 	FSides(){}
-	explicit FSides(const bool Sides): Top(Sides), Bottom(Sides), Front(Sides), Back(Sides), Right(Sides), Left(Sides) {}
+	explicit FSides(const bool InSides): Sides(InSides)
+	{
+		if(InSides)
+		{
+			Sides = (1 << 6) - 1;
+		} else
+		{
+			Sides = 0;
+		}
+	}
 	FSides(const bool InTop, const bool InBottom, const bool InFront, const bool InBack, const bool InRight, const bool InLeft)
-		: Top(InTop), Bottom(InBottom), Front(InFront), Back(InBack), Right(InRight), Left(InLeft) {};
+	{
+		Sides = InTop | InBottom | InFront | InBack | InRight | InLeft;
+	}
+
+	bool HasSide(const ESide InSide) const
+	{
+		return InSide == (InSide & Sides);
+	}
+
+	void SetSide(const ESide InSide, const bool Unset = false)
+	{
+		if(Unset)
+		{
+			Sides &= (~InSide);
+		} else
+		{
+			Sides |= InSide;
+		}
+	}
+
+	bool operator&&(const uint8 InSide) const
+	{
+		return Sides && InSide;
+	}
+
+	// bool operator==(const uint8 InSide) const
+	// {
+	// 	return Sides && InSide;
+	// }
+	bool operator==(const FSides& rhs) const
+	{
+		return Sides && rhs.Sides;
+	}
 };
 
 struct FBlockConfig
 {
 	FIntVector Position;
-	FSides SidesTORender;
+	FSides SidesToRender;
 	FVector Size;
 	FTile Tile;
 
-	FBlockConfig(FSides& InNeighbors, const FTile& InTile, const FIntVector& InPosition, const FVector& InSize) : Position(InPosition), SidesTORender{InNeighbors}, Size(InSize), Tile(InTile) {};
+	FBlockConfig(FSides& InNeighbors, const FTile& InTile, const FIntVector& InPosition, const FVector& InSize) : Position(InPosition), SidesToRender{InNeighbors}, Size(InSize), Tile(InTile) {};
 };

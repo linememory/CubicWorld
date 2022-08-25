@@ -44,5 +44,5 @@ private:
 	float GetNoise(float X, float Y);
 
 public:
-	virtual TOptional<FTile> GetTile(const FIntVector &Position, FWorldConfig &WorldConfig) override;
+	virtual TOptional<FTile> GetTile(const FIntVector &Position, const FWorldConfig &WorldConfig) override;
 };

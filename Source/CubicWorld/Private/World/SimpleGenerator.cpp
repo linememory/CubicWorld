@@ -22,7 +22,7 @@ float USimpleGenerator::GetNoise(const float X, const float Y)
 	return height;
 }
 
-TOptional<FTile> USimpleGenerator::GetTile(const FIntVector& Position, FWorldConfig& WorldConfig)
+TOptional<FTile> USimpleGenerator::GetTile(const FIntVector& Position, const FWorldConfig& WorldConfig)
 {
 	if(!bHasBeenInitialized) Init();
 	const int MaxHeight = WorldConfig.GetWorldBlockHeight();

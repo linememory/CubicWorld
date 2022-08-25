@@ -26,4 +26,14 @@ struct FTile
 	{
 		return Ar << Tile.TileID << Tile.health << Tile.bIsVisible;
 	}
+
+	bool operator==(const FTile& rhs) const
+	{
+		return TileID == rhs.TileID && bIsVisible == rhs.bIsVisible;
+	}
+
+	bool operator!=(const FTile& rhs) const
+	{
+		return !(*this == rhs);
+	}
 };

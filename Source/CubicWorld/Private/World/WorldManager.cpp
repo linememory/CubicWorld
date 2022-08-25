@@ -62,8 +62,6 @@ void AWorldManager::BeginDestroy()
 	if(GeneratorRunner != nullptr)
 	{
 		GeneratorRunner->Stop();
-		GeneratorRunner->Tasks.Empty();
-		GeneratorRunner->Results.Empty();
 		GeneratorRunner->Exit();
 	}
 	for (const auto chunkMesh : ChunkMeshes)
@@ -366,6 +364,56 @@ void AWorldManager::SetTile(const FIntVector InPosition, const FTile InTile)
 
 	if(const auto chunk = Chunks.Find(chunkPosition); chunk != nullptr && *chunk != nullptr)
 	{
+		if(tilePosition.X == 0)
+		{
+			if(const auto neighbor = Chunks.Find(chunkPosition-FIntVector(1,0,0)); neighbor != nullptr && *chunk != nullptr)
+			{
+				(*neighbor)->AddTile(FIntVector(WorldConfig.ChunkSize.X, tilePosition.Y, tilePosition.Z), InTile);
+				ChunkMeshesToGenerate.Enqueue(*neighbor);
+			}
+		}
+		if(tilePosition.Y == 0)
+		{
+			if(const auto neighbor = Chunks.Find(chunkPosition-FIntVector(0,1,0)); neighbor != nullptr && *chunk != nullptr)
+			{
+				(*neighbor)->AddTile(FIntVector(tilePosition.X, WorldConfig.ChunkSize.Y, tilePosition.Z), InTile);
+				ChunkMeshesToGenerate.Enqueue(*neighbor);
+			}
+		}
+		if(tilePosition.Z == 0)
+		{
+			if(const auto neighbor = Chunks.Find(chunkPosition-FIntVector(0,0,1)); neighbor != nullptr && *chunk != nullptr)
+			{
+				(*neighbor)->AddTile(FIntVector(tilePosition.X, tilePosition.Y, WorldConfig.ChunkSize.Z), InTile);
+				ChunkMeshesToGenerate.Enqueue(*neighbor);
+			}
+		}
+
+		if(tilePosition.X == WorldConfig.ChunkSize.X-1)
+		{
+			if(const auto neighbor = Chunks.Find(chunkPosition+FIntVector(1,0,0)); neighbor != nullptr && *chunk != nullptr)
+			{
+				(*neighbor)->AddTile(FIntVector(-1, tilePosition.Y, tilePosition.Z), InTile);
+				ChunkMeshesToGenerate.Enqueue(*neighbor);
+			}
+		}
+		if(tilePosition.Y == WorldConfig.ChunkSize.Y-1)
+		{
+			if(const auto neighbor = Chunks.Find(chunkPosition+FIntVector(0,1,0)); neighbor != nullptr && *chunk != nullptr)
+			{
+				(*neighbor)->AddTile(FIntVector(tilePosition.X, -1, tilePosition.Z), InTile);
+				ChunkMeshesToGenerate.Enqueue(*neighbor);
+			}
+		}
+		if(tilePosition.Z == WorldConfig.ChunkSize.Z-1)
+		{
+			if(const auto neighbor = Chunks.Find(chunkPosition+FIntVector(0,0,1)); neighbor != nullptr && *chunk != nullptr)
+			{
+				(*neighbor)->AddTile(FIntVector(tilePosition.X, tilePosition.Y, -1), InTile);
+				ChunkMeshesToGenerate.Enqueue(*neighbor);
+			}
+		}
+		
 		(*chunk)->AddTile(tilePosition, InTile);
 		ChunkMeshesToGenerate.Enqueue(*chunk);
 	}
@@ -481,10 +529,9 @@ void AWorldManager::RemoveTile(const FIntVector InPosition)
 
 bool AWorldManager::SaveWorld()
 {
-	bool result = false;
+	bool result = true;
 	for (const auto modifiedChunk : ModifiedChunks)
 	{
-		
 		if(!ChunkStorage->SaveChunk(modifiedChunk.Key, modifiedChunk.Value.ModifiedTiles))
 		{
 			result = false;

@@ -3,17 +3,17 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "TileType.generated.h"
+#include "BlockType.generated.h"
 
 /**
  * 
  */
 USTRUCT(BlueprintType)
-struct FTileType
+struct FBlockType
 {
 	GENERATED_BODY()
 	UPROPERTY(BlueprintReadWrite, EditAnywhere)
-    FString TileType = "";
+    FString BlockName = "";
 	UPROPERTY(BlueprintReadWrite, EditAnywhere)
 	bool bIsSolid = true;
 	

@@ -23,7 +23,7 @@ struct FChunkConfig
 		Position(InPosition),
 		WorldConfig(InWorldConfig){}
 	
-	FIntVector GetChunkPositionInTiles() const
+	FIntVector GetChunkPositionInBlocks() const
 	{
 		return FIntVector(Position.X * WorldConfig.ChunkSize.X,Position.Y * WorldConfig.ChunkSize.Y, Position.Z * WorldConfig.ChunkSize.Z);
 	}

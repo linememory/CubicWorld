@@ -3,7 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "TileType.h"
+#include "BlockType.h"
 #include "WorldConfig.generated.h"
 
 /**
@@ -25,7 +25,7 @@ struct FWorldConfig
 	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category="Tiles")
 	FVector BlockSize = FVector(100.0f);
 	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category="Tiles")
-	TArray<FTileType> TileTypes;
+	TArray<FBlockType> BlockTypes;
 	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category="Material")
 	UMaterialInterface* Material;
 

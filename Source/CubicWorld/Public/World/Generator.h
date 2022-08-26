@@ -4,7 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "Structs/ChunkConfig.h"
-#include "Structs/Tile.h"
+#include "Structs/Block.h"
 #include "UObject/Object.h"
 #include "Generator.generated.h"
 
@@ -17,10 +17,10 @@ class CUBICWORLD_API UGenerator : public UObject
 	GENERATED_BODY()
 public:
 	UFUNCTION()
-	void GenerateChunk(const FChunkConfig& ChunkConfig, TMap<FIntVector, FTile>& Tiles);
+	void GenerateChunk(const FChunkConfig& ChunkConfig, TMap<FIntVector, FBlock>& Blocks);
 	
-	virtual TOptional<FTile> GetTile(const FIntVector &Position, const FWorldConfig &WorldConfig)
+	virtual TOptional<FBlock> GetTile(const FIntVector &Position, const FWorldConfig &WorldConfig)
 	{
-		return TOptional<FTile>();
+		return TOptional<FBlock>();
 	}
 };

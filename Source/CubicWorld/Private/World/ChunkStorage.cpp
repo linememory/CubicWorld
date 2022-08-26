@@ -13,13 +13,13 @@ UChunkStorage::UChunkStorage()
 	StoragePath = FPaths::ProjectSavedDir();
 }
 
-bool UChunkStorage::SaveChunk(FIntVector InPosition, TMap<FIntVector, FTile> InTiles) const
+bool UChunkStorage::SaveChunk(FIntVector InPosition, TMap<FIntVector, FBlock> InBlocks) const
 {
 	FBufferArchive archive = FBufferArchive();
-	for (auto tile : InTiles)
+	for (auto block : InBlocks)
 	{
-		archive << tile.Key;
-		archive << tile.Value;
+		archive << block.Key;
+		archive << block.Value;
 	}
 	FString FilePath = StoragePath + FString::Format(TEXT("Map/{0};{1};{2}.chunk"), {InPosition.X, InPosition.Y, InPosition.Z});
 	FFileHelper::SaveArrayToFile(archive, *FilePath);
@@ -28,7 +28,7 @@ bool UChunkStorage::SaveChunk(FIntVector InPosition, TMap<FIntVector, FTile> InT
 	return true;
 }
 
-TOptional<TMap<FIntVector, FTile>> UChunkStorage::LoadChunk(const FIntVector& InPosition) const
+TOptional<TMap<FIntVector, FBlock>> UChunkStorage::LoadChunk(const FIntVector& InPosition) const
 {
 	FString FilePath = StoragePath + FString::Format(TEXT("Map/{0};{1};{2}.chunk"), {InPosition.X, InPosition.Y, InPosition.Z});
 
@@ -37,16 +37,16 @@ TOptional<TMap<FIntVector, FTile>> UChunkStorage::LoadChunk(const FIntVector& In
 	if(BinaryArray.Num() <= 0) return {};
 	FMemoryReader FromBinary(BinaryArray, true);
 	FromBinary.Seek(0);
-	TMap<FIntVector, FTile> Tiles;
+	TMap<FIntVector, FBlock> Blocks;
 	while (!FromBinary.AtEnd())
 	{
 		FIntVector pos;
-		FTile tile;
+		FBlock loadedBlock;
 		FromBinary << pos;
-		FromBinary << tile;
-		Tiles.Add(pos, tile);
+		FromBinary << loadedBlock;
+		Blocks.Add(pos, loadedBlock);
 	}
 	FObjectAndNameAsStringProxyArchive Ar(FromBinary, true);
 	BinaryArray.Empty();
-	return Tiles;
+	return Blocks;
 }

@@ -4,7 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "Generator.h"
-#include "Structs/Tile.h"
+#include "Structs/Block.h"
 
 /**
  *
@@ -13,8 +13,8 @@
 class CUBICWORLD_API FGeneratorRunner final : public FRunnable
 {
 public:
-	TQueue<TPair<FIntVector, TMap<FIntVector, FTile>>> Tasks;
-	TQueue<TPair<FIntVector, TMap<FIntVector, FTile>>> Results;
+	TQueue<TPair<FIntVector, TMap<FIntVector, FBlock>>> Tasks;
+	TQueue<TPair<FIntVector, TMap<FIntVector, FBlock>>> Results;
 
 	FGeneratorRunner(UGenerator *InGenerator, const FWorldConfig &InWorldConfig);
 	virtual uint32 Run() override;

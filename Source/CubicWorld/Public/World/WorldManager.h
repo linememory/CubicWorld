@@ -11,7 +11,7 @@
 #include "GameFramework/Actor.h"
 #include "Mesh/ChunkMesh.h"
 #include "Structs/ModifiedChunk.h"
-#include "Structs/TileType.h"
+#include "Structs/BlockType.h"
 #include "WorldManager.generated.h"
 
 UCLASS(BlueprintType, Blueprintable)
@@ -75,25 +75,25 @@ public:
 	virtual void Tick(float DeltaTime) override;
 
 	UFUNCTION(BlueprintCallable)
-	TArray<FTileType> GetTileTypes() const;
+	TArray<FBlockType> GetBlockTypes() const;
 	UFUNCTION(BlueprintCallable)
-	void SetTileTypes(TArray<FTileType> InTileTypes);
+	void SetBlockTypes(TArray<FBlockType> InBlockTypes);
 
 	void AddActorToTrack(AActor *InActorToTrack);
 
 	UFUNCTION(BlueprintCallable)
-	FIntVector GetChunkFromTile(FIntVector TilePosition) const;
+	FIntVector GetChunkPositionFromBlockWorldCoordinates(FIntVector BlockPosition) const;
 	UFUNCTION(BlueprintCallable)
-	FIntVector GetTilePositionFromWorldTilePosition(const FIntVector TilePosition) const;
+	FIntVector GetBlockPositionFromWorldBlockCoordinates(const FIntVector BlockPosition) const;
 
 	UFUNCTION(BlueprintCallable)
-	FIntVector GetTileCoordinatesFromWorldLocation(const FVector Location) const;
+	FIntVector GetBlockCoordinatesFromWorldLocation(const FVector Location) const;
 
 	UFUNCTION(BlueprintCallable)
-	void SetTile(FIntVector InPosition, FTile InTile);
+	void SetBlock(FIntVector InPosition, FBlock InBlock);
 
 	UFUNCTION(BlueprintCallable)
-	void RemoveTile(FIntVector InPosition);
+	void RemoveBlock(FIntVector InPosition);
 
 	UFUNCTION(BlueprintCallable)
 	bool SaveWorld();

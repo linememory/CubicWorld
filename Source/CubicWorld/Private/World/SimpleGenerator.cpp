@@ -22,28 +22,28 @@ float USimpleGenerator::GetNoise(const float X, const float Y)
 	return height;
 }
 
-TOptional<FTile> USimpleGenerator::GetTile(const FIntVector& Position, const FWorldConfig& WorldConfig)
+TOptional<FBlock> USimpleGenerator::GetTile(const FIntVector& Position, const FWorldConfig& WorldConfig)
 {
 	if(!bHasBeenInitialized) Init();
 	const int MaxHeight = WorldConfig.GetWorldBlockHeight();
 	if(const int noiseHeight = round(GetNoise(static_cast<float>(Position.X),static_cast<float>(Position.Y)) * MaxHeight); noiseHeight >= Position.Z)
 	{
-		const float tileHeightPercentage = static_cast<float>(Position.Z)/MaxHeight;
+		const float blockHeightPercentage = static_cast<float>(Position.Z)/MaxHeight;
 		int index = 0;
-		if(tileHeightPercentage < 0.1)
+		if(blockHeightPercentage < 0.1)
 			index = 3;
-		else if(tileHeightPercentage < 0.6)
+		else if(blockHeightPercentage < 0.6)
 		{
 			if(Position.Z+1 > noiseHeight)
 				index = 1;
 			else
 				index = 0;
 		}
-		else if(tileHeightPercentage < 0.8)
+		else if(blockHeightPercentage < 0.8)
 			index = 2;
-		else if(tileHeightPercentage <= 1)
+		else if(blockHeightPercentage <= 1)
 			index = 4;
-		return TOptional<FTile>(FTile(index));
+		return TOptional<FBlock>(FBlock(index));
 	}
-	return TOptional<FTile>();
+	return TOptional<FBlock>();
 }

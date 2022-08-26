@@ -5,7 +5,7 @@
 #include "CoreMinimal.h"
 #include "RuntimeMeshProvider.h"
 #include "World/Chunk.h"
-#include "World/Structs/Tile.h"
+#include "World/Structs/Block.h"
 #include "RuntimeMeshProviderChunk.generated.h"
 
 struct FBlockConfig;
@@ -58,7 +58,7 @@ private:
 	void SimpleMesh(FRuntimeMeshRenderableMeshData& MeshData, uint32 LODIndex);
 	
 	FSides GetSidesToRender(FIntVector InPosition, int divider = 1) const;
-	TArray<FTile> GetBlocks(FIntVector InPosition, int divider = 1) const;
+	TArray<FBlock> GetBlocks(FIntVector InPosition, int divider = 1) const;
 
 protected:
 	virtual void Initialize() override;
@@ -137,7 +137,7 @@ struct FBlockConfig
 	FIntVector Position;
 	FSides SidesToRender;
 	FVector Size;
-	FTile Tile;
+	FBlock Tile;
 
-	FBlockConfig(FSides& InNeighbors, const FTile& InTile, const FIntVector& InPosition, const FVector& InSize) : Position(InPosition), SidesToRender{InNeighbors}, Size(InSize), Tile(InTile) {};
+	FBlockConfig(FSides& InNeighbors, const FBlock& InTile, const FIntVector& InPosition, const FVector& InSize) : Position(InPosition), SidesToRender{InNeighbors}, Size(InSize), Tile(InTile) {};
 };

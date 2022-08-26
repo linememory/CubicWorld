@@ -3,7 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "Tile.h"
+#include "Block.h"
 #include "ModifiedChunk.generated.h"
 
 /**
@@ -15,16 +15,16 @@ struct FModifiedChunk
 	GENERATED_BODY()
 	
 	UPROPERTY(BlueprintReadWrite, EditAnywhere)
-	TMap<FIntVector, FTile> ModifiedTiles;
+	TMap<FIntVector, FBlock> ModifiedBlocks;
 
 	FModifiedChunk(){};
-	explicit FModifiedChunk(const TMap<FIntVector, FTile> InModifiedTiles) : ModifiedTiles(InModifiedTiles){};
+	explicit FModifiedChunk(const TMap<FIntVector, FBlock> InModifiedBlocks) : ModifiedBlocks(InModifiedBlocks){};
 
 	friend FArchive& operator<<( FArchive& Ar, FModifiedChunk& InModifiedChunk )
 	{
-		for (auto tile : InModifiedChunk.ModifiedTiles)
+		for (auto block : InModifiedChunk.ModifiedBlocks)
 		{
-			Ar << tile.Key << tile.Value;
+			Ar << block.Key << block.Value;
 		}
 		return Ar;
 	}

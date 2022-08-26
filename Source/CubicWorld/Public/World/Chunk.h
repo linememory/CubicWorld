@@ -4,7 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "Structs/ChunkConfig.h"
-#include "Structs/Tile.h"
+#include "Structs/Block.h"
 #include "UObject/Object.h"
 #include "Chunk.generated.h"
 
@@ -15,19 +15,24 @@ UCLASS(BlueprintType, Blueprintable)
 class CUBICWORLD_API UChunk final : public UObject
 {
 	GENERATED_BODY()
+private:
+	UPROPERTY(BlueprintSetter = SetBlocks, BlueprintGetter = GetBlocks)
+	TMap<FIntVector, FBlock> Blocks;
 
-	UPROPERTY(BlueprintSetter = SetTiles)
-	TMap<FIntVector, FTile> Tiles;
 
 public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	FChunkConfig ChunkConfig;
 
 public:
-	bool AddTile(FIntVector Position, FTile Tile);
-	bool RemoveTile(FIntVector Position);
-	const TMap<FIntVector, FTile> &GetTiles() const;
+	UFUNCTION(BlueprintCallable)
+	bool AddBlock(FIntVector Position, FBlock Tile);
+	UFUNCTION(BlueprintCallable)
+	bool RemoveBlock(FIntVector Position);
+	
+	UFUNCTION(BlueprintCallable)
+	void SetBlocks(TMap<FIntVector, FBlock> InTiles);
 
 	UFUNCTION(BlueprintCallable)
-	void SetTiles(TMap<FIntVector, FTile> InTiles);
+	const TMap<FIntVector, FBlock>& GetBlocks() const;
 };

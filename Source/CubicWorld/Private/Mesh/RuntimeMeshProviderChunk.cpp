@@ -134,7 +134,7 @@ void URuntimeMeshProviderChunk::GreedyMesh(FRuntimeMeshRenderableMeshData& MeshD
 	SCOPED_NAMED_EVENT(URuntimeMeshProviderChunk_GenerateGreedyMesh, FColor::Cyan);
 
 	
-	const auto& [ChunkSize, MaxChunksZ, MaxChunkRenderDistance, BlockSize, TileTypes, Material, LODs] = Chunk->ChunkConfig.WorldConfig;
+	const FWorldConfig& WorldConfig = Chunk->ChunkConfig.WorldConfig;
 
 	struct FState
 	{
@@ -142,7 +142,7 @@ void URuntimeMeshProviderChunk::GreedyMesh(FRuntimeMeshRenderableMeshData& MeshD
 		FIntVector end;
 		bool active = false;
 		bool generateSide = false;
-		FTile block;
+		FBlock block;
 		TMap<FIntVector, bool> visited;
 		FState()
 		{
@@ -151,12 +151,12 @@ void URuntimeMeshProviderChunk::GreedyMesh(FRuntimeMeshRenderableMeshData& MeshD
 
 	struct FBlockData
 	{
-		const FTile* Block;
+		const FBlock* Block;
 		FIntVector Position;
 		FSides Sides;
 
 		FBlockData(): Block(nullptr), Position{0}, Sides{false}{}
-		FBlockData(const FTile* const InBlock, const FIntVector& InPosition, const FSides& InSides) :
+		FBlockData(const FBlock* const InBlock, const FIntVector& InPosition, const FSides& InSides) :
 			Block(InBlock),
 			Position(InPosition),
 		    Sides(InSides)
@@ -171,19 +171,19 @@ void URuntimeMeshProviderChunk::GreedyMesh(FRuntimeMeshRenderableMeshData& MeshD
 		{
 			case FSides::Top:
 			case FSides::Bottom:
-				ChunkEndA = ChunkSize.X - BlockData.Position.X;
-				ChunkEndB = ChunkSize.Y - BlockData.Position.Y;
+				ChunkEndA = WorldConfig.ChunkSize.X - BlockData.Position.X;
+				ChunkEndB = WorldConfig.ChunkSize.Y - BlockData.Position.Y;
 				break;
 			case FSides::Front:
 			case FSides::Back:
-				ChunkEndA = ChunkSize.X - BlockData.Position.X;
-				ChunkEndB = ChunkSize.Z - BlockData.Position.Z;
+				ChunkEndA = WorldConfig.ChunkSize.X - BlockData.Position.X;
+				ChunkEndB = WorldConfig.ChunkSize.Z - BlockData.Position.Z;
 				break;
 				
 			case FSides::Right:
 			case FSides::Left:
-				ChunkEndA = ChunkSize.Y - BlockData.Position.Y;
-				ChunkEndB = ChunkSize.Z - BlockData.Position.Z;
+				ChunkEndA = WorldConfig.ChunkSize.Y - BlockData.Position.Y;
+				ChunkEndB = WorldConfig.ChunkSize.Z - BlockData.Position.Z;
 			break;
 		}
 		
@@ -225,7 +225,7 @@ void URuntimeMeshProviderChunk::GreedyMesh(FRuntimeMeshRenderableMeshData& MeshD
 							BlockPosition = {BlockData.Position.X, BlockData.Position.Y+A, BlockData.Position.Z+B};
 							break;
 					}
-					const FTile* Block = Chunk->GetTiles().Find(BlockPosition);
+					const FBlock* Block = Chunk->GetBlocks().Find(BlockPosition);
 					const FSides Sides = GetSidesToRender(BlockPosition);
 					if(Block != nullptr && *Block == State.block && Sides.HasSide(Side) && !State.visited.Find(BlockPosition))
 					{
@@ -264,14 +264,14 @@ void URuntimeMeshProviderChunk::GreedyMesh(FRuntimeMeshRenderableMeshData& MeshD
 	Back.generateSide = false;
 	Right.generateSide = false;
 	Left.generateSide = false;
-	for (int Z = 0; Z < ChunkSize.Z; ++Z)
+	for (int Z = 0; Z < WorldConfig.ChunkSize.Z; ++Z)
 	{
-		for (int Y = 0; Y < ChunkSize.Y; ++Y)
+		for (int Y = 0; Y < WorldConfig.ChunkSize.Y; ++Y)
 		{
-			for (int X = 0; X < ChunkSize.X; ++X)
+			for (int X = 0; X < WorldConfig.ChunkSize.X; ++X)
 			{
 				FIntVector BlockPosition(X,Y,Z);
-				FBlockData BlockData(Chunk->GetTiles().Find(BlockPosition), BlockPosition, GetSidesToRender(BlockPosition));
+				FBlockData BlockData(Chunk->GetBlocks().Find(BlockPosition), BlockPosition, GetSidesToRender(BlockPosition));
 				
 				// Top
 				GetGreedyTile(Top, BlockData, FSides::Top);
@@ -286,21 +286,14 @@ void URuntimeMeshProviderChunk::GreedyMesh(FRuntimeMeshRenderableMeshData& MeshD
 							Top.visited.Add(FIntVector(X+Xs, Y+Ys, Z), true);
 						}
 					}
-					auto [TileType, bIsSolid, bSideDiffers, TextureId, SideTextureId, BottomTextureId, Color, SideColor] = TileTypes[Top.block.TileID];
-					FVector PositionStart = FVector(Top.start)*BlockSize - FVector(GetBounds().BoxExtent.X,GetBounds().BoxExtent.Y,0.0f);
-					FVector PositionEnd = FVector(Top.end)*BlockSize - FVector(GetBounds().BoxExtent.X,GetBounds().BoxExtent.Y,0.0f);
+					FBlockType tileType = WorldConfig.BlockTypes[Top.block.BlockTypeID];
+					FVector PositionStart = FVector(Top.start)*WorldConfig.BlockSize - FVector(GetBounds().BoxExtent.X,GetBounds().BoxExtent.Y,0.0f);
+					FVector PositionEnd = FVector(Top.end)*WorldConfig.BlockSize - FVector(GetBounds().BoxExtent.X,GetBounds().BoxExtent.Y,0.0f);
 					FVector QuadSize(FVector(Top.end-Top.start) + FVector(1));
 					FVector2f UVMultiplication = FVector2f(QuadSize.X, QuadSize.Y).GetAbs();
 					int textureMapSize = 8;
-					if(!bSideDiffers)
-					{
-						SideTextureId = TextureId;
-						BottomTextureId = TextureId;
-						SideColor = Color;
-						
-					}
 					FVector2f textureSize = FVector2f(1.0f/textureMapSize,1.0f/textureMapSize);
-					FVector2f textureOffset = FVector2f(TextureId%textureMapSize, floor(TextureId/textureMapSize))*textureSize;
+					FVector2f textureOffset = FVector2f(tileType.TextureId%textureMapSize, floor(tileType.TextureId/textureMapSize))*textureSize;
 					AddQuad(MeshData,
 						BlockVertices[7] + FVector(PositionStart.X, PositionEnd.Y, PositionStart.Z),
 						BlockVertices[4] + PositionStart,
@@ -308,7 +301,7 @@ void URuntimeMeshProviderChunk::GreedyMesh(FRuntimeMeshRenderableMeshData& MeshD
 						BlockVertices[6] + PositionEnd,
 						{0.0f, 0.0f, 1.0f}, {1.0f, 0.0f, 0.0f},
 						textureOffset, UVMultiplication,
-						Color);
+						tileType.Color);
 					Top.active = false;
 					Top.generateSide = false;
 				}
@@ -326,9 +319,9 @@ void URuntimeMeshProviderChunk::GreedyMesh(FRuntimeMeshRenderableMeshData& MeshD
 							Bottom.visited.Add(FIntVector(X+Xs, Y+Ys, Z), true);
 						}
 					}
-					FTileType tileType = TileTypes[Bottom.block.TileID];
-					FVector PositionStart = FVector(Bottom.start)*BlockSize - FVector(GetBounds().BoxExtent.X,GetBounds().BoxExtent.Y,0.0f);
-					FVector PositionEnd = FVector(Bottom.end)*BlockSize - FVector(GetBounds().BoxExtent.X,GetBounds().BoxExtent.Y,0.0f);
+					FBlockType tileType = WorldConfig.BlockTypes[Bottom.block.BlockTypeID];
+					FVector PositionStart = FVector(Bottom.start)*WorldConfig.BlockSize - FVector(GetBounds().BoxExtent.X,GetBounds().BoxExtent.Y,0.0f);
+					FVector PositionEnd = FVector(Bottom.end)*WorldConfig.BlockSize - FVector(GetBounds().BoxExtent.X,GetBounds().BoxExtent.Y,0.0f);
 					FVector QuadSize(FVector(Bottom.end-Bottom.start) + FVector(1));
 					FVector2f UVMultiplication = FVector2f(QuadSize.X, QuadSize.Y).GetAbs();
 					int textureMapSize = 8;
@@ -361,9 +354,9 @@ void URuntimeMeshProviderChunk::GreedyMesh(FRuntimeMeshRenderableMeshData& MeshD
 							Front.visited.Add(FIntVector(X+Xs, Y, Z+Zs), true);
 						}
 					}
-					FTileType tileType = TileTypes[Front.block.TileID];
-					FVector PositionStart = FVector(Front.start)*BlockSize - FVector(GetBounds().BoxExtent.X,GetBounds().BoxExtent.Y,0.0f);
-					FVector PositionEnd = FVector(Front.end)*BlockSize - FVector(GetBounds().BoxExtent.X,GetBounds().BoxExtent.Y,0.0f);
+					FBlockType tileType = WorldConfig.BlockTypes[Front.block.BlockTypeID];
+					FVector PositionStart = FVector(Front.start)*WorldConfig.BlockSize - FVector(GetBounds().BoxExtent.X,GetBounds().BoxExtent.Y,0.0f);
+					FVector PositionEnd = FVector(Front.end)*WorldConfig.BlockSize - FVector(GetBounds().BoxExtent.X,GetBounds().BoxExtent.Y,0.0f);
 					FVector QuadSize(FVector(Front.end-Front.start) + FVector(1));
 					FVector2f UVMultiplication = FVector2f(QuadSize.X, QuadSize.Z).GetAbs();
 					int textureMapSize = 8;
@@ -396,9 +389,9 @@ void URuntimeMeshProviderChunk::GreedyMesh(FRuntimeMeshRenderableMeshData& MeshD
 							Back.visited.Add(FIntVector(X+Xs, Y, Z+Zs), true);
 						}
 					}
-					FTileType tileType = TileTypes[Back.block.TileID];
-					FVector PositionStart = FVector(Back.end)*BlockSize - FVector(GetBounds().BoxExtent.X,GetBounds().BoxExtent.Y,0.0f);
-					FVector PositionEnd = FVector(Back.start)*BlockSize - FVector(GetBounds().BoxExtent.X,GetBounds().BoxExtent.Y,0.0f);
+					FBlockType tileType = WorldConfig.BlockTypes[Back.block.BlockTypeID];
+					FVector PositionStart = FVector(Back.end)*WorldConfig.BlockSize - FVector(GetBounds().BoxExtent.X,GetBounds().BoxExtent.Y,0.0f);
+					FVector PositionEnd = FVector(Back.start)*WorldConfig.BlockSize - FVector(GetBounds().BoxExtent.X,GetBounds().BoxExtent.Y,0.0f);
 					FVector QuadSize(FVector(Back.start-Back.end).GetAbs() + FVector(1));
 					FVector2f UVMultiplication = FVector2f(QuadSize.X, QuadSize.Z);
 					int textureMapSize = 8;
@@ -431,9 +424,9 @@ void URuntimeMeshProviderChunk::GreedyMesh(FRuntimeMeshRenderableMeshData& MeshD
 							Right.visited.Add(FIntVector(X, Y+Ys, Z+Zs), true);
 						}
 					}
-					FTileType tileType = TileTypes[Right.block.TileID];
-					FVector PositionStart = FVector(Right.start)*BlockSize - FVector(GetBounds().BoxExtent.X,GetBounds().BoxExtent.Y,0.0f);
-					FVector PositionEnd = FVector(Right.end)*BlockSize - FVector(GetBounds().BoxExtent.X,GetBounds().BoxExtent.Y,0.0f);
+					FBlockType tileType = WorldConfig.BlockTypes[Right.block.BlockTypeID];
+					FVector PositionStart = FVector(Right.start)*WorldConfig.BlockSize - FVector(GetBounds().BoxExtent.X,GetBounds().BoxExtent.Y,0.0f);
+					FVector PositionEnd = FVector(Right.end)*WorldConfig.BlockSize - FVector(GetBounds().BoxExtent.X,GetBounds().BoxExtent.Y,0.0f);
 					FVector QuadSize(FVector(Right.end-Right.start).GetAbs() + FVector(1));
 					FVector2f UVMultiplication = FVector2f(QuadSize.Y, QuadSize.Z);
 					int textureMapSize = 8;
@@ -466,9 +459,9 @@ void URuntimeMeshProviderChunk::GreedyMesh(FRuntimeMeshRenderableMeshData& MeshD
 							Left.visited.Add(FIntVector(X, Y+Ys, Z+Zs), true);
 						}
 					}
-					FTileType tileType = TileTypes[Left.block.TileID];
-					FVector PositionStart = FVector(Left.start)*BlockSize - FVector(GetBounds().BoxExtent.X,GetBounds().BoxExtent.Y,0.0f);
-					FVector PositionEnd = FVector(Left.end)*BlockSize - FVector(GetBounds().BoxExtent.X,GetBounds().BoxExtent.Y,0.0f);
+					FBlockType tileType = WorldConfig.BlockTypes[Left.block.BlockTypeID];
+					FVector PositionStart = FVector(Left.start)*WorldConfig.BlockSize - FVector(GetBounds().BoxExtent.X,GetBounds().BoxExtent.Y,0.0f);
+					FVector PositionEnd = FVector(Left.end)*WorldConfig.BlockSize - FVector(GetBounds().BoxExtent.X,GetBounds().BoxExtent.Y,0.0f);
 					FVector QuadSize(FVector(Left.end-Left.start) + FVector(1));
 					FVector2f UVMultiplication = FVector2f(QuadSize.Y, QuadSize.Z).GetAbs();
 					int textureMapSize = 8;
@@ -503,7 +496,7 @@ void URuntimeMeshProviderChunk::SimpleMesh(FRuntimeMeshRenderableMeshData& MeshD
 	SCOPED_NAMED_EVENT(URuntimeMeshProviderChunk_GenerateSimpleMesh, FColor::Cyan);
 	if(LODIndex == 0)
 	{
-		for (const TTuple<FIntVector, FTile> tile : Chunk->GetTiles())
+		for (const TTuple<FIntVector, FBlock> tile : Chunk->GetBlocks())
 		{
 			if(bMarkedForDestroy)
 			{
@@ -590,16 +583,16 @@ FSides URuntimeMeshProviderChunk::GetSidesToRender(const FIntVector InPosition, 
 	return SidesToRender;
 }
 
-TArray<FTile> URuntimeMeshProviderChunk::GetBlocks(const FIntVector InPosition, const int divider) const
+TArray<FBlock> URuntimeMeshProviderChunk::GetBlocks(const FIntVector InPosition, const int divider) const
 {
-	TArray<FTile> Tiles;
+	TArray<FBlock> Tiles;
 	for (int Z = 0; Z < divider; ++Z)
 	{
 		for (int Y = 0; Y < divider; ++Y)
 		{
 			for (int X = 0; X < divider; ++X)
 			{
-				if(const auto tile = Chunk->GetTiles().Find(InPosition+FIntVector(X,Y,Z)); tile != nullptr)
+				if(const auto tile = Chunk->GetBlocks().Find(InPosition+FIntVector(X,Y,Z)); tile != nullptr)
 				{
 					Tiles.Add(*tile);
 				}
@@ -616,22 +609,18 @@ void URuntimeMeshProviderChunk::AddTile(FRuntimeMeshRenderableMeshData &MeshData
 	SCOPE_CYCLE_COUNTER(STAT_GenerateTileMesh);
 	SCOPED_NAMED_EVENT(URuntimeMeshProviderChunk_GenerateTileMesh, FColor::Green);
 
-	const TArray<FTileType>& TileTypes = Chunk->ChunkConfig.WorldConfig.TileTypes;
-	auto [TileType, bIsSolid, bSideDiffers, TextureId, SideTextureId, BottomTextureId, Color, SideColor] = InTileConfig.Tile.TileID < TileTypes.Num() ? TileTypes[InTileConfig.Tile.TileID] : TileTypes[0];
-
-	
-	if(!bSideDiffers)
-	{
-		SideTextureId = TextureId;
-		BottomTextureId = TextureId;
-		SideColor = Color;
-	}
+	const TArray<FBlockType>& TileTypes = Chunk->ChunkConfig.WorldConfig.BlockTypes;
+	const FBlockType BlockType = InTileConfig.Tile.BlockTypeID < TileTypes.Num() ? TileTypes[InTileConfig.Tile.BlockTypeID] : TileTypes[0];
 
 	constexpr int textureMapSize = 8;
+	const int TextureId = BlockType.bSideDiffers ? BlockType.SideTextureId : BlockType.TextureId;
 	const FVector2f textureSize = FVector2f(1.0f/textureMapSize,1.0f/textureMapSize);
 	const FVector2f textureOffset = FVector2f(TextureId%textureMapSize, floor(TextureId/textureMapSize))*textureSize;
-	const FVector2f sideTextureOffset = FVector2f(SideTextureId%textureMapSize, floor(SideTextureId/textureMapSize))*textureSize;
-	const FVector2f bottomTextureOffset = FVector2f(BottomTextureId%textureMapSize, floor(BottomTextureId/textureMapSize))*textureSize;
+	const FColor Color = BlockType.Color;
+	const FColor SideColor = BlockType.bSideDiffers ? BlockType.SideColor : BlockType.Color;
+	
+	const FVector2f sideTextureOffset = BlockType.bSideDiffers ? FVector2f(BlockType.SideTextureId%textureMapSize, floor(BlockType.SideTextureId/textureMapSize))*textureSize : textureOffset;
+	const FVector2f bottomTextureOffset = BlockType.bSideDiffers ? FVector2f(BlockType.BottomTextureId%textureMapSize, floor(BlockType.BottomTextureId/textureMapSize))*textureSize : textureOffset;
 	const FVector position = FVector(InTileConfig.Position)*Chunk->ChunkConfig.WorldConfig.BlockSize - FVector(GetBounds().BoxExtent.X,GetBounds().BoxExtent.Y,0.0f);
 
 	

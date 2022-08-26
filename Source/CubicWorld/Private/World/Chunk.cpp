@@ -3,23 +3,24 @@
 
 #include "World/Chunk.h"
 
-bool UChunk::AddTile(const FIntVector Position, const FTile Tile)
+bool UChunk::AddBlock(const FIntVector Position, const FBlock Tile)
 {
-	Tiles.Add(Position, Tile);
+	Blocks.Add(Position, Tile);
 	return true;
 }
 
-bool UChunk::RemoveTile(const FIntVector Position)
+bool UChunk::RemoveBlock(const FIntVector Position)
 {
-	return static_cast<bool>(Tiles.Remove(Position));
+	return static_cast<bool>(Blocks.Remove(Position));
 }
 
-const TMap<FIntVector, FTile>& UChunk::GetTiles() const
+const TMap<FIntVector, FBlock>& UChunk::GetBlocks() const
 {
-	return Tiles;
+	return Blocks;
 }
 
-void UChunk::SetTiles(const TMap<FIntVector, FTile> InTiles)
+void UChunk::SetBlocks(const TMap<FIntVector, FBlock> InTiles)
 {
-	Tiles = InTiles;
+	Blocks = InTiles;
 }
+

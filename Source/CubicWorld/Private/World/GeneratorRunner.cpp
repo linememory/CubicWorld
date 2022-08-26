@@ -42,14 +42,14 @@ uint32 FGeneratorRunner::Run()
 		{
 			SCOPE_CYCLE_COUNTER(STAT_Generator);
 			SCOPED_NAMED_EVENT(FGeneratorRunner_Generate, FColor::Red);
-			TPair<FIntVector, TMap<FIntVector, FTile>> task;
+			TPair<FIntVector, TMap<FIntVector, FBlock>> task;
 			Tasks.Dequeue(task);
 			FChunkConfig chunkConfig = FChunkConfig(WorldConfig, task.Key);
-			TMap<FIntVector, FTile> tiles = task.Value;
-			Generator->GenerateChunk(chunkConfig, tiles);
-			TPair<FIntVector, TMap<FIntVector, FTile>> result;
+			TMap<FIntVector, FBlock> blocks = task.Value;
+			Generator->GenerateChunk(chunkConfig, blocks);
+			TPair<FIntVector, TMap<FIntVector, FBlock>> result;
 			result.Key = task.Key;
-			result.Value = tiles;
+			result.Value = blocks;
 			Results.Enqueue(result);
 		}
 	}

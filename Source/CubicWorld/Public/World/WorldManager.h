@@ -97,4 +97,7 @@ public:
 
 	UFUNCTION(BlueprintCallable)
 	bool SaveWorld();
+
+	UFUNCTION(BlueprintCallable)
+	void ShowDebugLines(bool Blocks = false, bool Grid = false) const;
 };

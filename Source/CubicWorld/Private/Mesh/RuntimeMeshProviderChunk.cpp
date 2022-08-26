@@ -710,24 +710,6 @@ void URuntimeMeshProviderChunk::AddTile(FRuntimeMeshRenderableMeshData &MeshData
 	}
 }
 
-void URuntimeMeshProviderChunk::SetHasCollision(const bool bInHasCollision)
-{
-	FScopeLock Lock(&PropertySyncRoot);
-	if(bHasCollision != bInHasCollision)
-	{
-		bHasCollision = bInHasCollision;
-		MarkCollisionDirty();
-	}
-}
-
-bool URuntimeMeshProviderChunk::GetHasCollision() const
-{
-	FScopeLock Lock(&PropertySyncRoot);
-	return bHasCollision;
-}
-
-
-
 const UChunk* URuntimeMeshProviderChunk::GetChunk() const
 {
 	return Chunk;

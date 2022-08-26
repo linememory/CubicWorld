@@ -19,8 +19,6 @@ public:
 	const UChunk *Chunk;
 
 private:
-	UPROPERTY(VisibleAnywhere, BlueprintGetter = GetHasCollision, BlueprintSetter = SetHasCollision)
-	bool bHasCollision;
 	UPROPERTY(EditAnywhere)
 	URuntimeMeshComponent *RuntimeMeshComponent;
 	UPROPERTY()
@@ -29,11 +27,6 @@ private:
 public:
 	// Sets default values for this actor's properties
 	AChunkMesh();
-
-	UFUNCTION(BlueprintCallable)
-	bool GetHasCollision() const;
-	UFUNCTION(BlueprintCallable)
-	void SetHasCollision(bool bInHasCollision);
 
 protected:
 	// Called when the game starts or when spawned
@@ -45,4 +38,7 @@ public:
 	virtual void BeginDestroy() override;
 	UFUNCTION(BlueprintCallable)
 	void GenerateMesh();
+
+	UFUNCTION(BlueprintCallable)
+	void ShowDebugLines(bool ChunkDebugLines = false, bool BlocksDebugLines = false, bool GridDebugLines = false) const;
 };

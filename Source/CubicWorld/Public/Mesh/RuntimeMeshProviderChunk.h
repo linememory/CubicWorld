@@ -22,9 +22,6 @@ class CUBICWORLD_API URuntimeMeshProviderChunk final : public URuntimeMeshProvid
 private:
 	mutable FCriticalSection PropertySyncRoot;
 
-	UPROPERTY(BlueprintGetter = GetHasCollision, BlueprintSetter = SetHasCollision)
-	bool bHasCollision;
-
 	UPROPERTY(BlueprintGetter = GetChunk, BlueprintSetter = SetChunk)
 	const UChunk *Chunk;
 
@@ -32,12 +29,6 @@ private:
 	TArray<FVector> BlockVertices;
 
 public:
-	UFUNCTION(Category = "RuntimeMesh|Providers|Box", BlueprintCallable)
-	bool GetHasCollision() const;
-
-	UFUNCTION(Category = "RuntimeMesh|Providers|Box", BlueprintCallable)
-	void SetHasCollision(const bool bInHasCollision);
-
 	UFUNCTION(Category = "RuntimeMesh|Providers|Box", BlueprintCallable)
 	const UChunk *GetChunk() const;
 

@@ -444,3 +444,12 @@ bool AWorldManager::SaveWorld()
 	}
 	return result;
 }
+
+void AWorldManager::ShowDebugLines(const bool Blocks, const bool Grid) const
+{
+	FlushPersistentDebugLines(GetWorld());
+	for (const auto chunkMesh : ChunkMeshes)
+	{
+		chunkMesh.Value->ShowDebugLines(true, Blocks, Grid);
+	}
+}

@@ -35,3 +35,5 @@ struct FBlock
 		return !(*this == rhs);
 	}
 };
+
+static const FBlock Air = FBlock();

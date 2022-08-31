@@ -28,9 +28,7 @@ private:
 	UPROPERTY()
 	TMap<FIntVector, UChunk *> Chunks;
 	UPROPERTY()
-	TArray<FIntVector> ModifiedChunks2;
-	UPROPERTY()
-	TMap<FIntVector, FModifiedChunk> ModifiedChunks;
+	TArray<FIntVector> ModifiedChunks;
 	UPROPERTY()
 	TMap<FIntVector, AChunkMesh *> ChunkMeshes;
 

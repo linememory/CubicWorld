@@ -29,6 +29,9 @@ public:
 	bool AddBlock(FIntVector Position, FBlock Tile);
 	UFUNCTION(BlueprintCallable)
 	bool RemoveBlock(FIntVector Position);
+
+	UFUNCTION()
+	FBlock GetBlock(const FIntVector& Position) const;
 	
 	UFUNCTION(BlueprintCallable)
 	void SetBlocks(TMap<FIntVector, FBlock> InTiles);

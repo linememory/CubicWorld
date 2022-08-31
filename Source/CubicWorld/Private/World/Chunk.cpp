@@ -14,6 +14,12 @@ bool UChunk::RemoveBlock(const FIntVector Position)
 	return static_cast<bool>(Blocks.Remove(Position));
 }
 
+FBlock UChunk::GetBlock(const FIntVector& Position) const
+{
+	const auto block = Blocks.Find(Position);
+	return block != nullptr ? *block : FBlock();
+}
+
 const TMap<FIntVector, FBlock>& UChunk::GetBlocks() const
 {
 	return Blocks;

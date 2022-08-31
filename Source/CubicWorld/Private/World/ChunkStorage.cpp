@@ -21,7 +21,8 @@ bool UChunkStorage::SaveChunk(FIntVector InPosition, TMap<FIntVector, FBlock> In
 		archive << block.Key;
 		archive << block.Value;
 	}
-	FString FilePath = StoragePath + FString::Format(TEXT("Map/{0};{1};{2}.chunk"), {InPosition.X, InPosition.Y, InPosition.Z});
+	FString name = FString::Format(TEXT("{0}{1}{2}.chunk"), {InPosition.X < 0 ? abs(InPosition.X)*2-1 : InPosition.X*2, InPosition.Y < 0 ? abs(InPosition.Y)*2-1 : InPosition.Y*2,InPosition.Z < 0 ? abs(InPosition.Z)*2-1 : InPosition.Z*2});
+	FString FilePath = StoragePath + "Map/" + name;
 	FFileHelper::SaveArrayToFile(archive, *FilePath);
 	archive.FlushCache();
 	archive.Empty();
@@ -30,8 +31,8 @@ bool UChunkStorage::SaveChunk(FIntVector InPosition, TMap<FIntVector, FBlock> In
 
 TOptional<TMap<FIntVector, FBlock>> UChunkStorage::LoadChunk(const FIntVector& InPosition) const
 {
-	FString FilePath = StoragePath + FString::Format(TEXT("Map/{0};{1};{2}.chunk"), {InPosition.X, InPosition.Y, InPosition.Z});
-
+	FString name = FString::Format(TEXT("{0}{1}{2}.chunk"), {InPosition.X < 0 ? abs(InPosition.X)*2-1 : InPosition.X*2, InPosition.Y < 0 ? abs(InPosition.Y)*2-1 : InPosition.Y*2,InPosition.Z < 0 ? abs(InPosition.Z)*2-1 : InPosition.Z*2});
+	FString FilePath = StoragePath + "Map/" + name;
 	FBufferArchive BinaryArray = FBufferArchive();
 	if(!FFileHelper::LoadFileToArray(BinaryArray, *FilePath, FILEREAD_Silent)) return {};
 	if(BinaryArray.Num() <= 0) return {};

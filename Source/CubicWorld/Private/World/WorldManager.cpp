@@ -269,26 +269,6 @@ void AWorldManager::UnloadChunks()
 	ChunksToUnload.Reset();
 }
 
-void AWorldManager::UpdateChunk(FIntVector InChunkPosition, const FIntVector InBlockPosition)
-{
-	if(const auto chunk = Chunks.Find(InChunkPosition); chunk != nullptr && *chunk != nullptr)
-	{
-		(*chunk)->RemoveBlock(InBlockPosition);
-		ChunkMeshesToGenerate.Enqueue(*chunk);
-
-		auto modifiedChunk = ModifiedChunks.Find(InChunkPosition);
-		if(modifiedChunk == nullptr)
-		{
-			modifiedChunk = &ModifiedChunks.Add({InChunkPosition, FModifiedChunk()});
-		}
-		if(modifiedChunk == nullptr)
-		{
-			modifiedChunk = &ModifiedChunks.Add({InChunkPosition, FModifiedChunk()});
-		}
-		modifiedChunk->ModifiedBlocks.Add(InBlockPosition, FBlock(255));
-	}
-}
-
 
 TArray<FBlockType> AWorldManager::GetBlockTypes() const
 {
@@ -308,12 +288,12 @@ void AWorldManager::AddActorToTrack(AActor* InActorToTrack)
 	TrackerComponents.Add(trackable);
 }
 
-FIntVector AWorldManager::GetChunkPositionFromBlockWorldCoordinates(const FIntVector BlockPosition) const
+FIntVector AWorldManager::GetChunkPositionFromBlockWorldCoordinates(const FIntVector& BlockPosition) const
 {
 	return FIntVector(floor(static_cast<float>(BlockPosition.X)/WorldConfig.ChunkSize.X), floor(static_cast<float>(BlockPosition.Y)/WorldConfig.ChunkSize.Y), floor(static_cast<float>(BlockPosition.Z)/WorldConfig.ChunkSize.Z));
 }
 
-FIntVector AWorldManager::GetBlockPositionFromWorldBlockCoordinates(const FIntVector BlockPosition) const
+FIntVector AWorldManager::GetBlockPositionFromWorldBlockCoordinates(const FIntVector& BlockPosition) const
 {
 	FIntVector blockPosition =  FIntVector(BlockPosition.X%WorldConfig.ChunkSize.X,BlockPosition.Y%WorldConfig.ChunkSize.Y,BlockPosition.Z%WorldConfig.ChunkSize.Z);
 	blockPosition = FIntVector(	blockPosition.X < 0 ? blockPosition.X+WorldConfig.ChunkSize.X : blockPosition.X,
@@ -322,7 +302,7 @@ FIntVector AWorldManager::GetBlockPositionFromWorldBlockCoordinates(const FIntVe
 	return blockPosition;
 }
 
-FIntVector AWorldManager::GetBlockCoordinatesFromWorldLocation(const FVector Location) const
+FIntVector AWorldManager::GetBlockCoordinatesFromWorldLocation(const FVector& Location) const
 {
     const FVector calculatedLocation = (FVector(Location.X, Location.Y, Location.Z)+WorldConfig.GetChunkWorldSize()/2*FVector(1.0f, 1.0f, 0.0f)) / WorldConfig.BlockSize;
     const FIntVector blockLocation = FIntVector(floor(calculatedLocation.X), floor(calculatedLocation.Y), floor(calculatedLocation.Z));
@@ -330,7 +310,22 @@ FIntVector AWorldManager::GetBlockCoordinatesFromWorldLocation(const FVector Loc
 	return blockLocation;
 }
 
-void AWorldManager::SetBlock(const FIntVector InPosition, const FBlock InBlock)
+FBlock AWorldManager::GetBlock(const FIntVector& InPosition) const
+{
+	const FIntVector chunkPosition = GetChunkPositionFromBlockWorldCoordinates(InPosition);
+	const FIntVector tilePosition = GetBlockPositionFromWorldBlockCoordinates(InPosition);
+
+	if(const auto chunk = Chunks.Find(chunkPosition); chunk != nullptr && *chunk != nullptr)
+	{
+		if(const auto block = (*chunk)->GetBlocks().Find(tilePosition); block != nullptr)
+		{
+			return *block;
+		}
+	}
+	return FBlock();
+}
+
+void AWorldManager::SetBlock(const FIntVector& InPosition, const FBlock& InBlock)
 {
 	const FIntVector chunkPosition = GetChunkPositionFromBlockWorldCoordinates(InPosition);
 	const FIntVector tilePosition = GetBlockPositionFromWorldBlockCoordinates(InPosition);
@@ -398,37 +393,58 @@ void AWorldManager::SetBlock(const FIntVector InPosition, const FBlock InBlock)
 	}
 }
 
-void AWorldManager::RemoveBlock(const FIntVector InPosition)
+FBlock AWorldManager::RemoveBlock(const FIntVector& InPosition)
 {
 	const FIntVector chunkPosition = GetChunkPositionFromBlockWorldCoordinates(InPosition);
 	const FIntVector tilePosition = GetBlockPositionFromWorldBlockCoordinates(InPosition);
-	
-	UpdateChunk(chunkPosition, tilePosition);
 
-	// Update Neighbors
-	if( tilePosition.X == 0)
+	const FBlock block = GetBlock(InPosition);
+	if(block != FBlock())
 	{
-		UpdateChunk(chunkPosition+FIntVector(-1,0,0), tilePosition+FIntVector(WorldConfig.ChunkSize.X, 0, 0));
+		RemoveBlock(chunkPosition, tilePosition);
+
+		// Update Neighbors
+		if( tilePosition.X == 0)
+		{
+			RemoveBlock(chunkPosition+FIntVector(-1,0,0), tilePosition+FIntVector(WorldConfig.ChunkSize.X, 0, 0));
+		}
+		if(tilePosition.Y == 0)
+		{
+			RemoveBlock(chunkPosition+FIntVector(0,-1,0), tilePosition+FIntVector(0, WorldConfig.ChunkSize.Y, 0));
+		}
+		if(tilePosition.Z == 0)
+		{
+			RemoveBlock(chunkPosition+FIntVector(0,0,-1), tilePosition+FIntVector(0, 0, WorldConfig.ChunkSize.Z));
+		}
+		if(tilePosition.X == WorldConfig.ChunkSize.X-1)
+		{
+			RemoveBlock(chunkPosition+FIntVector(1,0,0), tilePosition-FIntVector(WorldConfig.ChunkSize.X, 0, 0));
+		}
+		if(tilePosition.Y == WorldConfig.ChunkSize.Y-1)
+		{
+			RemoveBlock(chunkPosition+FIntVector(0,1,0), tilePosition-FIntVector(0, WorldConfig.ChunkSize.Y, 0));
+		}
+		if(tilePosition.Z == WorldConfig.ChunkSize.Z-1)
+		{
+			RemoveBlock(chunkPosition+FIntVector(0,0,1), tilePosition-FIntVector(0, 0, WorldConfig.ChunkSize.Z));
+		}
 	}
-	if(tilePosition.Y == 0)
+	return block;
+}
+
+void AWorldManager::RemoveBlock(const FIntVector& InChunkPosition, const FIntVector& InBlockPosition)
+{
+	if(const auto chunk = Chunks.Find(InChunkPosition); chunk != nullptr && *chunk != nullptr)
 	{
-		UpdateChunk(chunkPosition+FIntVector(0,-1,0), tilePosition+FIntVector(0, WorldConfig.ChunkSize.Y, 0));
-	}
-	if(tilePosition.Z == 0)
-	{
-		UpdateChunk(chunkPosition+FIntVector(0,0,-1), tilePosition+FIntVector(0, 0, WorldConfig.ChunkSize.Z));
-	}
-	if(tilePosition.X == WorldConfig.ChunkSize.X-1)
-	{
-		UpdateChunk(chunkPosition+FIntVector(1,0,0), tilePosition-FIntVector(WorldConfig.ChunkSize.X, 0, 0));
-	}
-	if(tilePosition.Y == WorldConfig.ChunkSize.Y-1)
-	{
-		UpdateChunk(chunkPosition+FIntVector(0,1,0), tilePosition-FIntVector(0, WorldConfig.ChunkSize.Y, 0));
-	}
-	if(tilePosition.Z == WorldConfig.ChunkSize.Z-1)
-	{
-		UpdateChunk(chunkPosition+FIntVector(0,0,1), tilePosition-FIntVector(0, 0, WorldConfig.ChunkSize.Z));
+		(*chunk)->RemoveBlock(InBlockPosition);
+		ChunkMeshesToGenerate.Enqueue(*chunk);
+
+		auto modifiedChunk = ModifiedChunks.Find(InChunkPosition);
+		if(modifiedChunk == nullptr)
+		{
+			modifiedChunk = &ModifiedChunks.Add({InChunkPosition, FModifiedChunk()});
+		}
+		modifiedChunk->ModifiedBlocks.Add(InBlockPosition, FBlock(255));
 	}
 }
 

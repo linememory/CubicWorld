@@ -28,6 +28,8 @@ private:
 	UPROPERTY()
 	TMap<FIntVector, UChunk *> Chunks;
 	UPROPERTY()
+	TArray<FIntVector> ModifiedChunks2;
+	UPROPERTY()
 	TMap<FIntVector, FModifiedChunk> ModifiedChunks;
 	UPROPERTY()
 	TMap<FIntVector, AChunkMesh *> ChunkMeshes;
@@ -68,7 +70,7 @@ private:
 	void GenerateChunkMeshes();
 	void UnloadChunks();
 
-	void UpdateChunk(FIntVector InChunkPosition, FIntVector InBlockPosition);
+	void RemoveBlock(const FIntVector& InChunkPosition, const FIntVector& InBlockPosition);
 
 public:
 	// Called every frame
@@ -82,18 +84,21 @@ public:
 	void AddActorToTrack(AActor *InActorToTrack);
 
 	UFUNCTION(BlueprintCallable)
-	FIntVector GetChunkPositionFromBlockWorldCoordinates(FIntVector BlockPosition) const;
+	FIntVector GetChunkPositionFromBlockWorldCoordinates(const FIntVector& BlockPosition) const;
 	UFUNCTION(BlueprintCallable)
-	FIntVector GetBlockPositionFromWorldBlockCoordinates(const FIntVector BlockPosition) const;
+	FIntVector GetBlockPositionFromWorldBlockCoordinates(const FIntVector& BlockPosition) const;
 
 	UFUNCTION(BlueprintCallable)
-	FIntVector GetBlockCoordinatesFromWorldLocation(const FVector Location) const;
+	FIntVector GetBlockCoordinatesFromWorldLocation(const FVector& Location) const;
 
 	UFUNCTION(BlueprintCallable)
-	void SetBlock(FIntVector InPosition, FBlock InBlock);
+	FBlock GetBlock(const FIntVector& InPosition) const;
 
 	UFUNCTION(BlueprintCallable)
-	void RemoveBlock(FIntVector InPosition);
+	void SetBlock(const FIntVector& InPosition, const FBlock& InBlock);
+
+	UFUNCTION(BlueprintCallable)
+	FBlock RemoveBlock(const FIntVector& InPosition);
 
 	UFUNCTION(BlueprintCallable)
 	bool SaveWorld();

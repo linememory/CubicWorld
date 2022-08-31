@@ -70,9 +70,6 @@ void AChunkMesh::GenerateMesh()
 			CollisionSettings.bUseAsyncCooking = true;
 			ChunkCollisionProvider->SetCollisionSettings(CollisionSettings);
 			RMC->Initialize(ChunkCollisionProvider);
-
-			
-			
 		}
 	}
 	
@@ -92,19 +89,6 @@ void AChunkMesh::ShowDebugLines(bool ChunkDebugLines, bool BlocksDebugLines, boo
 			FVector position = (FVector(tile.Key)+FVector(0.5,0.5,0.5))*WorldConfig.BlockSize + GetActorLocation()+WorldConfig.GetChunkWorldSize()*FVector(0,0,0.5) - WorldConfig.GetChunkWorldSize()/2;
 			DrawDebugBox(GetWorld(), position, WorldConfig.BlockSize/2*1.00015, FColor::Blue, true, -1, 0, 0.5);
 		}
-
-		// // LODs
-		// for (auto tile : Chunk->GetBlocks())
-		// {
-		// 	const int multiplier = 2;
-		// 	if(	tile.Key.X % multiplier == 0 &&
-		// 		tile.Key.Y % multiplier == 0 &&
-		// 		tile.Key.Z % multiplier == 0 ) 
-		// 	{
-		// 		FVector position = (FVector(tile.Key)+FVector(1,1,1))*WorldConfig.BlockSize + GetActorLocation()+WorldConfig.GetChunkWorldSize()*FVector(0,0,0.5) - WorldConfig.GetChunkWorldSize()/2;
-		// 		DrawDebugBox(GetWorld(), position, WorldConfig.BlockSize*1.00025, FColor::Green, true, -1, 0, 1.5);
-		// 	}
-		// }
 	}
 	if(GridDebugLines)
 	{

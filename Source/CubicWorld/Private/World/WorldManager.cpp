@@ -323,7 +323,7 @@ void AWorldManager::SetBlock(const FIntVector& InPosition, const FBlock& InBlock
 	{
 		if(tilePosition.X == 0)
 		{
-			if(const auto neighbor = Chunks.Find(chunkPosition-FIntVector(1,0,0)); neighbor != nullptr && *chunk != nullptr)
+			if(const auto neighbor = Chunks.Find(chunkPosition-FIntVector(1,0,0)); neighbor != nullptr && *neighbor != nullptr)
 			{
 				(*neighbor)->AddBlock(FIntVector(WorldConfig.ChunkSize.X, tilePosition.Y, tilePosition.Z), InBlock);
 				ChunkMeshesToGenerate.Enqueue(*neighbor);
@@ -331,7 +331,7 @@ void AWorldManager::SetBlock(const FIntVector& InPosition, const FBlock& InBlock
 		}
 		if(tilePosition.Y == 0)
 		{
-			if(const auto neighbor = Chunks.Find(chunkPosition-FIntVector(0,1,0)); neighbor != nullptr && *chunk != nullptr)
+			if(const auto neighbor = Chunks.Find(chunkPosition-FIntVector(0,1,0)); neighbor != nullptr && *neighbor != nullptr)
 			{
 				(*neighbor)->AddBlock(FIntVector(tilePosition.X, WorldConfig.ChunkSize.Y, tilePosition.Z), InBlock);
 				ChunkMeshesToGenerate.Enqueue(*neighbor);
@@ -339,7 +339,7 @@ void AWorldManager::SetBlock(const FIntVector& InPosition, const FBlock& InBlock
 		}
 		if(tilePosition.Z == 0)
 		{
-			if(const auto neighbor = Chunks.Find(chunkPosition-FIntVector(0,0,1)); neighbor != nullptr && *chunk != nullptr)
+			if(const auto neighbor = Chunks.Find(chunkPosition-FIntVector(0,0,1)); neighbor != nullptr && *neighbor != nullptr)
 			{
 				(*neighbor)->AddBlock(FIntVector(tilePosition.X, tilePosition.Y, WorldConfig.ChunkSize.Z), InBlock);
 				ChunkMeshesToGenerate.Enqueue(*neighbor);
@@ -348,7 +348,7 @@ void AWorldManager::SetBlock(const FIntVector& InPosition, const FBlock& InBlock
 
 		if(tilePosition.X == WorldConfig.ChunkSize.X-1)
 		{
-			if(const auto neighbor = Chunks.Find(chunkPosition+FIntVector(1,0,0)); neighbor != nullptr && *chunk != nullptr)
+			if(const auto neighbor = Chunks.Find(chunkPosition+FIntVector(1,0,0)); neighbor != nullptr && *neighbor != nullptr)
 			{
 				(*neighbor)->AddBlock(FIntVector(-1, tilePosition.Y, tilePosition.Z), InBlock);
 				ChunkMeshesToGenerate.Enqueue(*neighbor);
@@ -356,7 +356,7 @@ void AWorldManager::SetBlock(const FIntVector& InPosition, const FBlock& InBlock
 		}
 		if(tilePosition.Y == WorldConfig.ChunkSize.Y-1)
 		{
-			if(const auto neighbor = Chunks.Find(chunkPosition+FIntVector(0,1,0)); neighbor != nullptr && *chunk != nullptr)
+			if(const auto neighbor = Chunks.Find(chunkPosition+FIntVector(0,1,0)); neighbor != nullptr && *neighbor != nullptr)
 			{
 				(*neighbor)->AddBlock(FIntVector(tilePosition.X, -1, tilePosition.Z), InBlock);
 				ChunkMeshesToGenerate.Enqueue(*neighbor);
@@ -364,7 +364,7 @@ void AWorldManager::SetBlock(const FIntVector& InPosition, const FBlock& InBlock
 		}
 		if(tilePosition.Z == WorldConfig.ChunkSize.Z-1)
 		{
-			if(const auto neighbor = Chunks.Find(chunkPosition+FIntVector(0,0,1)); neighbor != nullptr && *chunk != nullptr)
+			if(const auto neighbor = Chunks.Find(chunkPosition+FIntVector(0,0,1)); neighbor != nullptr && *neighbor != nullptr)
 			{
 				(*neighbor)->AddBlock(FIntVector(tilePosition.X, tilePosition.Y, -1), InBlock);
 				ChunkMeshesToGenerate.Enqueue(*neighbor);

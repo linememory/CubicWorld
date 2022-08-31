@@ -16,15 +16,13 @@ struct FBlock
     uint8 BlockTypeID = 0;
 	UPROPERTY(BlueprintReadWrite, EditAnywhere)
 	bool bIsVisible = true;
-	UPROPERTY(BlueprintReadWrite, EditAnywhere)
-	uint8 health = UINT8_MAX;
 
-	FBlock(){};
+	FBlock(): BlockTypeID(UINT8_MAX), bIsVisible(false){};
 	explicit FBlock(const uint8 InTileID):BlockTypeID(InTileID){}
 
 	friend FArchive& operator<<( FArchive& Ar, FBlock& Block )
 	{
-		return Ar << Block.BlockTypeID << Block.health << Block.bIsVisible;
+		return Ar << Block.BlockTypeID << Block.bIsVisible;
 	}
 
 	bool operator==(const FBlock& rhs) const

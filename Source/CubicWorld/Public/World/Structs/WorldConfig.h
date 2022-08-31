@@ -14,8 +14,6 @@ struct FWorldConfig
 {
 	GENERATED_BODY()
 	
-	inline static constexpr float TILE_SHORT_SIDE_RATIO = 7.0f/8.0f;
-	
 	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category="Chunk")
 	FIntVector ChunkSize = FIntVector(16,16,16);
 	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category="Chunk")
@@ -30,7 +28,7 @@ struct FWorldConfig
 	UMaterialInterface* Material;
 
 	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category="Material")
-	TArray<float> LODs = {1, 0.1, 0.01};
+	TArray<float> LODs = {1};
 	
 	uint16 GetWorldBlockHeight() const
 	{

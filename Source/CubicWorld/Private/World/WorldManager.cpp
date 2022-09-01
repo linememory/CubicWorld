@@ -113,16 +113,24 @@ void AWorldManager::UpdateVisibleChunks()
 			trackable->LastWorldPosition = position;
 			for (int Z = 0; Z < WorldConfig.MaxChunksZ; ++Z)
 			{
-				for (int Y = -distance; Y <= distance; ++Y)
+				for (int Y = -distance-1; Y <= distance+1; ++Y)
 				{
-					for (int X = -distance; X <= distance; ++X)
+					for (int X = -distance-1; X <= distance+1; ++X)
 					{
-						if(FIntVector chunkToLoad = FIntVector(position.X+X, position.Y+Y, Z);
-							ChunksToLoad.Find(chunkToLoad) == INDEX_NONE && Chunks.Find(chunkToLoad) == nullptr)
+						FIntVector ChunkToLoad{position.X+X, position.Y+Y, Z};
+						const int32 index = ChunksToLoad.Find(ChunkToLoad); 
+						if(index == INDEX_NONE && Chunks.Find(ChunkToLoad) == nullptr)
 						{
-							ChunksToLoad.Add(chunkToLoad);
-							ChunksToUnload.Remove(chunkToLoad);
-							
+							ChunksToLoad.Add(ChunkToLoad);
+							ChunksToUnload.Remove(ChunkToLoad);
+							if(abs(Y) <= distance && abs(X) <= distance)
+                            {
+                            	VisibleChunks.Add(ChunkToLoad);
+                            }
+						}else if(abs(Y) <= distance && abs(X) <= distance)
+						{
+							VisibleChunks.Add(ChunkToLoad);
+							ChunkMeshesToGenerate.Enqueue(ChunkToLoad);
 						}
 					}
 				}	
@@ -206,7 +214,7 @@ void AWorldManager::GenerateChunks()
 			{
 				(*chunk)->SetBlocks(tiles.Value);
 				if(hasGeometry)
-					ChunkMeshesToGenerate.Enqueue(*chunk);
+					ChunkMeshesToGenerate.Enqueue(tiles.Key);
 			}
 		}
 	}
@@ -219,20 +227,24 @@ void AWorldManager::GenerateChunkMeshes()
 	SCOPED_NAMED_EVENT(AWorldManager_GenerateChunkMeshes, FColor::Blue);
 	while (!ChunkMeshesToGenerate.IsEmpty())
 	{
-		UChunk* chunkToGenerate;
-		ChunkMeshesToGenerate.Dequeue(chunkToGenerate);
-		const FIntVector* Position = Chunks.FindKey(chunkToGenerate);
+		FIntVector Position;
+		ChunkMeshesToGenerate.Dequeue(Position);
+		const UChunk* const * Chunk = Chunks.Find(Position);
+		if(Chunk == nullptr || *Chunk == nullptr || !VisibleChunks.Find(Position))
+		{
+			continue;
+		}
 		AChunkMesh* ChunkMesh;
-		if(const auto foundChunkMesh = ChunkMeshes.Find(*Position); foundChunkMesh != nullptr && *foundChunkMesh != nullptr)
+		if(const auto foundChunkMesh = ChunkMeshes.Find(Position); foundChunkMesh != nullptr && *foundChunkMesh != nullptr)
 		{
 			ChunkMesh = *foundChunkMesh;
 			
 		} else
 		{
-			FVector SpawnLocation = FVector(FVector(*Position) * WorldConfig.GetChunkWorldSize());
+			FVector SpawnLocation = FVector(FVector(Position) * WorldConfig.GetChunkWorldSize());
 			ChunkMesh =  GetWorld()->SpawnActor<AChunkMesh>(SpawnLocation, FRotator(0));
-			ChunkMesh->Chunk = chunkToGenerate;
-			ChunkMeshes.Add(*Position, ChunkMesh);
+			ChunkMesh->Chunk = *Chunk;
+			ChunkMeshes.Add(Position, ChunkMesh);
 		}
 		ChunkMesh->GenerateMesh();
 	}
@@ -323,56 +335,62 @@ void AWorldManager::SetBlock(const FIntVector& InPosition, const FBlock& InBlock
 	{
 		if(tilePosition.X == 0)
 		{
+			const FIntVector Position = chunkPosition-FIntVector(1,0,0);
 			if(const auto neighbor = Chunks.Find(chunkPosition-FIntVector(1,0,0)); neighbor != nullptr && *neighbor != nullptr)
 			{
 				(*neighbor)->AddBlock(FIntVector(WorldConfig.ChunkSize.X, tilePosition.Y, tilePosition.Z), InBlock);
-				ChunkMeshesToGenerate.Enqueue(*neighbor);
+				ChunkMeshesToGenerate.Enqueue(Position);
 			}
 		}
 		if(tilePosition.Y == 0)
 		{
+			const FIntVector Position = chunkPosition-FIntVector(0,1,0);
 			if(const auto neighbor = Chunks.Find(chunkPosition-FIntVector(0,1,0)); neighbor != nullptr && *neighbor != nullptr)
 			{
 				(*neighbor)->AddBlock(FIntVector(tilePosition.X, WorldConfig.ChunkSize.Y, tilePosition.Z), InBlock);
-				ChunkMeshesToGenerate.Enqueue(*neighbor);
+				ChunkMeshesToGenerate.Enqueue(Position);
 			}
 		}
 		if(tilePosition.Z == 0)
 		{
+			const FIntVector Position = chunkPosition-FIntVector(0,0,1);
 			if(const auto neighbor = Chunks.Find(chunkPosition-FIntVector(0,0,1)); neighbor != nullptr && *neighbor != nullptr)
 			{
 				(*neighbor)->AddBlock(FIntVector(tilePosition.X, tilePosition.Y, WorldConfig.ChunkSize.Z), InBlock);
-				ChunkMeshesToGenerate.Enqueue(*neighbor);
+				ChunkMeshesToGenerate.Enqueue(Position);
 			}
 		}
 
 		if(tilePosition.X == WorldConfig.ChunkSize.X-1)
 		{
+			const FIntVector Position = chunkPosition+FIntVector(1,0,0);
 			if(const auto neighbor = Chunks.Find(chunkPosition+FIntVector(1,0,0)); neighbor != nullptr && *neighbor != nullptr)
 			{
 				(*neighbor)->AddBlock(FIntVector(-1, tilePosition.Y, tilePosition.Z), InBlock);
-				ChunkMeshesToGenerate.Enqueue(*neighbor);
+				ChunkMeshesToGenerate.Enqueue(Position);
 			}
 		}
 		if(tilePosition.Y == WorldConfig.ChunkSize.Y-1)
 		{
+			const FIntVector Position = chunkPosition+FIntVector(0,1,0);
 			if(const auto neighbor = Chunks.Find(chunkPosition+FIntVector(0,1,0)); neighbor != nullptr && *neighbor != nullptr)
 			{
 				(*neighbor)->AddBlock(FIntVector(tilePosition.X, -1, tilePosition.Z), InBlock);
-				ChunkMeshesToGenerate.Enqueue(*neighbor);
+				ChunkMeshesToGenerate.Enqueue(Position);
 			}
 		}
 		if(tilePosition.Z == WorldConfig.ChunkSize.Z-1)
 		{
+			const FIntVector Position = chunkPosition+FIntVector(0,0,1) ;
 			if(const auto neighbor = Chunks.Find(chunkPosition+FIntVector(0,0,1)); neighbor != nullptr && *neighbor != nullptr)
 			{
 				(*neighbor)->AddBlock(FIntVector(tilePosition.X, tilePosition.Y, -1), InBlock);
-				ChunkMeshesToGenerate.Enqueue(*neighbor);
+				ChunkMeshesToGenerate.Enqueue(Position);
 			}
 		}
 		
 		(*chunk)->AddBlock(tilePosition, InBlock);
-		ChunkMeshesToGenerate.Enqueue(*chunk);
+		ChunkMeshesToGenerate.Enqueue(chunkPosition);
 	}
 }
 
@@ -420,7 +438,7 @@ void AWorldManager::RemoveBlock(const FIntVector& InChunkPosition, const FIntVec
 	if(const auto chunk = Chunks.Find(InChunkPosition); chunk != nullptr && *chunk != nullptr)
 	{
 		(*chunk)->RemoveBlock(InBlockPosition);
-		ChunkMeshesToGenerate.Enqueue(*chunk);
+		ChunkMeshesToGenerate.Enqueue(InChunkPosition);
 
 		if(ModifiedChunks.Find(InChunkPosition) == INDEX_NONE)
 		{

@@ -10,7 +10,6 @@
 #include "Trackable.h"
 #include "GameFramework/Actor.h"
 #include "Mesh/ChunkMesh.h"
-#include "Structs/ModifiedChunk.h"
 #include "Structs/BlockType.h"
 #include "WorldManager.generated.h"
 
@@ -38,7 +37,8 @@ private:
 	TArray<FIntVector> ChunksToUnload;
 	UPROPERTY()
 	TArray<FIntVector> ChunksToRebuild;
-	TQueue<UChunk *> ChunkMeshesToGenerate;
+	TSet<FIntVector> VisibleChunks;
+	TQueue<FIntVector> ChunkMeshesToGenerate;
 
 	float MillisSinceLastSave = 0;
 

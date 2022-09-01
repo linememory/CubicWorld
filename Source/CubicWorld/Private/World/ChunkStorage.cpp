@@ -34,11 +34,11 @@ TOptional<TMap<FIntVector, FBlock>> UChunkStorage::LoadChunk(const FIntVector& I
 	FString name = FString::Format(TEXT("{0}{1}{2}.chunk"), {InPosition.X < 0 ? abs(InPosition.X)*2-1 : InPosition.X*2, InPosition.Y < 0 ? abs(InPosition.Y)*2-1 : InPosition.Y*2,InPosition.Z < 0 ? abs(InPosition.Z)*2-1 : InPosition.Z*2});
 	FString FilePath = StoragePath + "Map/" + name;
 	FBufferArchive BinaryArray = FBufferArchive();
+	TMap<FIntVector, FBlock> Blocks;
 	if(!FFileHelper::LoadFileToArray(BinaryArray, *FilePath, FILEREAD_Silent)) return {};
-	if(BinaryArray.Num() <= 0) return {};
+	if(BinaryArray.Num() <= 0) return {Blocks};
 	FMemoryReader FromBinary(BinaryArray, true);
 	FromBinary.Seek(0);
-	TMap<FIntVector, FBlock> Blocks;
 	while (!FromBinary.AtEnd())
 	{
 		FIntVector pos;

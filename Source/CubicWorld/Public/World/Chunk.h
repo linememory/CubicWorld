@@ -3,6 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "ChunkData.h"
 #include "Structs/ChunkConfig.h"
 #include "Structs/Block.h"
 #include "UObject/Object.h"
@@ -16,8 +17,8 @@ class CUBICWORLD_API UChunk final : public UObject
 {
 	GENERATED_BODY()
 private:
-	UPROPERTY(BlueprintSetter = SetBlocks, BlueprintGetter = GetBlocks)
-	TMap<FIntVector, FBlock> Blocks;
+	//UPROPERTY(BlueprintSetter = SetBlocks, BlueprintGetter = GetBlocks)
+	TChunkData Blocks;
 
 
 public:
@@ -34,7 +35,7 @@ public:
 	FBlock GetBlock(const FIntVector& Position) const;
 	
 	UFUNCTION(BlueprintCallable)
-	void SetBlocks(TMap<FIntVector, FBlock> InTiles);
+	void SetBlocks(TMap<FIntVector, FBlock> InBlocks);
 
 	UFUNCTION(BlueprintCallable)
 	const TMap<FIntVector, FBlock>& GetBlocks() const;

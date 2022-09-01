@@ -5,28 +5,30 @@
 
 bool UChunk::AddBlock(const FIntVector Position, const FBlock Tile)
 {
-	Blocks.Add(Position, Tile);
+	Blocks.SetBlock(Position, Tile);
 	return true;
 }
 
 bool UChunk::RemoveBlock(const FIntVector Position)
 {
-	return static_cast<bool>(Blocks.Remove(Position));
+	return Blocks.RemoveBlock(Position);
 }
 
 FBlock UChunk::GetBlock(const FIntVector& Position) const
 {
-	const auto block = Blocks.Find(Position);
-	return block != nullptr ? *block : FBlock();
+	return Blocks.GetBlock(Position);
 }
 
 const TMap<FIntVector, FBlock>& UChunk::GetBlocks() const
 {
-	return Blocks;
+	return Blocks.GetBlocks();
 }
 
-void UChunk::SetBlocks(const TMap<FIntVector, FBlock> InTiles)
+void UChunk::SetBlocks(const TMap<FIntVector, FBlock> InBlocks)
 {
-	Blocks = InTiles;
+	for(auto block : InBlocks)
+	{
+		Blocks.SetBlock(block.Key, block.Value);
+	}
 }
 

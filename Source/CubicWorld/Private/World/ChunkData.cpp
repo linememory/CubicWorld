@@ -12,6 +12,10 @@ FBlock TChunkData::GetBlock(const FIntVector& Position) const
 
 bool TChunkData::SetBlock(const FIntVector& Position, const FBlock& Block)
 {
+	if(Block == Air)
+	{
+		return RemoveBlock(Position);
+	}
 	Blocks.Add(Position, Block);
 	return true;
 }
@@ -24,5 +28,10 @@ bool TChunkData::RemoveBlock(const FIntVector& Position)
 const TMap<FIntVector, FBlock>& TChunkData::GetBlocks() const
 {
 	return Blocks;
+}
+
+bool TChunkData::IsEmpty() const
+{
+	return Blocks.Num() == 0;
 }
 

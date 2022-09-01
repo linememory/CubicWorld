@@ -21,6 +21,8 @@ public:
 	bool SetBlock(const FIntVector& Position, const FBlock& Block);
 	bool RemoveBlock(const FIntVector& Position);
 	const TMap<FIntVector, FBlock>& GetBlocks() const;
+
+	bool IsEmpty() const;
 	
 	
 };

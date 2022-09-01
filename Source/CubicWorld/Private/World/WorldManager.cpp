@@ -56,7 +56,6 @@ void AWorldManager::BeginPlay()
 void AWorldManager::BeginDestroy()
 {
 	ChunksToLoad.Empty();
-	ChunksToRebuild.Empty();
 	ChunksToUnload.Empty();
 	ChunkMeshesToGenerate.Empty();
 	if(GeneratorRunner != nullptr)

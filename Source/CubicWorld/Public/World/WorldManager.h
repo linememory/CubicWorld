@@ -36,11 +36,9 @@ private:
 	UPROPERTY()
 	TArray<FIntVector> ChunksToUnload;
 	UPROPERTY()
-	TArray<FIntVector> ChunksToRebuild;
 	TSet<FIntVector> VisibleChunks;
-	TQueue<FIntVector> ChunkMeshesToGenerate;
 
-	float MillisSinceLastSave = 0;
+	TQueue<FIntVector> ChunkMeshesToGenerate;
 
 public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)

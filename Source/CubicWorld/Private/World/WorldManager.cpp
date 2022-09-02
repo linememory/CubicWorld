@@ -6,6 +6,7 @@
 #include <concrt.h>
 
 #include "Globals.h"
+#include "IContentBrowserSingleton.h"
 #include "Kismet/GameplayStatics.h"
 #include "Mesh/ChunkMesh.h"
 #include "World/SimpleGenerator.h"
@@ -126,7 +127,7 @@ void AWorldManager::UpdateVisibleChunks()
                             {
                             	VisibleChunks.Add(ChunkToLoad);
                             }
-						}else if(abs(Y) <= distance && abs(X) <= distance)
+						}else if(abs(Y) <= distance && abs(X) <= distance && VisibleChunks.Find(ChunkToLoad) == nullptr)
 						{
 							VisibleChunks.Add(ChunkToLoad);
 							ChunkMeshesToGenerate.Enqueue(ChunkToLoad);
@@ -165,7 +166,9 @@ void AWorldManager::UpdateVisibleChunks()
 				}
 			}
 			if(shouldUnload)
+			{
 				ChunksToUnload.Add(chunk.Key);
+			}
 		}
 	}
 }
@@ -181,6 +184,7 @@ void AWorldManager::GenerateChunks()
 			const FChunkConfig chunkConfig = FChunkConfig(WorldConfig, chunkPosition);
 			UChunk* chunk = NewObject<UChunk>();
 			chunk->ChunkConfig = chunkConfig;
+			chunk->WorldChunks = &Chunks;
 			Chunks.Add(chunkPosition, chunk);
 
 			if(auto tiles = ChunkStorage->LoadChunk(chunkPosition); tiles.IsSet())
@@ -212,7 +216,7 @@ void AWorldManager::GenerateChunks()
 			if(UChunk** chunk = Chunks.Find(tiles.Key); chunk != nullptr && *chunk != nullptr)
 			{
 				(*chunk)->SetBlocks(tiles.Value);
-				if(hasGeometry)
+				if(hasGeometry && VisibleChunks.Find(tiles.Key) != nullptr)
 					ChunkMeshesToGenerate.Enqueue(tiles.Key);
 			}
 		}
@@ -224,6 +228,7 @@ void AWorldManager::GenerateChunkMeshes()
 {
 	SCOPE_CYCLE_COUNTER(STAT_GenerateChunkMeshes);
 	SCOPED_NAMED_EVENT(AWorldManager_GenerateChunkMeshes, FColor::Blue);
+	TArray<FIntVector> Deferred;
 	while (!ChunkMeshesToGenerate.IsEmpty())
 	{
 		FIntVector Position;
@@ -231,6 +236,24 @@ void AWorldManager::GenerateChunkMeshes()
 		const UChunk* const * Chunk = Chunks.Find(Position);
 		if(Chunk == nullptr || *Chunk == nullptr || !VisibleChunks.Find(Position))
 		{
+			continue;
+		}
+		const auto Top = Chunks.Find(Position+FIntVector(0,0,1));
+		const auto Bottom = Chunks.Find(Position+FIntVector(0,0,-1));
+		const auto Front = Chunks.Find(Position+FIntVector(0,1,0));
+		const auto Back = Chunks.Find(Position+FIntVector(0,-1,0));
+		const auto Right = Chunks.Find(Position+FIntVector(1,0,0));
+		const auto Left = Chunks.Find(Position+FIntVector(-1,0,0));
+
+		if(!(*Chunk)->bIsReady ||
+			( Position.Z < WorldConfig.MaxChunksZ-1 && (Top == nullptr || *Top == nullptr || !(*Top)->bIsReady)) ||
+			( Position.Z > 0 && Bottom == nullptr && (Bottom == nullptr || *Bottom == nullptr || !(*Bottom)->bIsReady)) ||
+			Front == nullptr || Front == nullptr || *Front == nullptr || !(*Front)->bIsReady||
+			Back == nullptr || Back == nullptr || *Back == nullptr || !(*Back)->bIsReady||
+			Right == nullptr || Right == nullptr || *Right == nullptr || !(*Right)->bIsReady||
+			Left == nullptr || Left == nullptr || *Left == nullptr || !(*Left)->bIsReady)
+		{
+			Deferred.Add(Position);
 			continue;
 		}
 		AChunkMesh* ChunkMesh;
@@ -243,9 +266,14 @@ void AWorldManager::GenerateChunkMeshes()
 			FVector SpawnLocation = FVector(FVector(Position) * WorldConfig.GetChunkWorldSize());
 			ChunkMesh =  GetWorld()->SpawnActor<AChunkMesh>(SpawnLocation, FRotator(0));
 			ChunkMesh->Chunk = *Chunk;
+			
 			ChunkMeshes.Add(Position, ChunkMesh);
 		}
 		ChunkMesh->GenerateMesh();
+	}
+	for (auto chunkPosition : Deferred)
+	{
+		ChunkMeshesToGenerate.Enqueue(chunkPosition);
 	}
 }
 
@@ -258,9 +286,10 @@ void AWorldManager::UnloadChunks()
 		if(const auto chunkMesh = ChunkMeshes.Find(position); chunkMesh != nullptr && *chunkMesh != nullptr)
 		{
 			(*chunkMesh)->Destroy();
-			Chunks.Remove(position);
-			ChunkMeshes.Remove(position);
 		}
+		Chunks.Remove(position);
+		VisibleChunks.Remove(position);
+		ChunkMeshes.Remove(position);
 	}
 	ChunksToUnload.Reset();
 }

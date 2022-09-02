@@ -342,9 +342,9 @@ FBlock AWorldManager::GetBlock(const FIntVector& InPosition) const
 
 	if(const auto chunk = Chunks.Find(chunkPosition); chunk != nullptr && *chunk != nullptr)
 	{
-		if(const auto block = (*chunk)->GetBlocks().Find(tilePosition); block != nullptr)
+		if(const auto block = (*chunk)->GetBlock(tilePosition); block != Air)
 		{
-			return *block;
+			return block;
 		}
 	}
 	return FBlock();
@@ -482,10 +482,10 @@ bool AWorldManager::SaveWorld()
 	{
 		if(const auto modifiedChunk = Chunks.Find(modifiedChunkPosition); modifiedChunk != nullptr && *modifiedChunk != nullptr)
 		{
-			if(!ChunkStorage->SaveChunk(modifiedChunkPosition, (*modifiedChunk)->GetBlocks()))
-			{
-				result = false;
-			}
+			// if(!ChunkStorage->SaveChunk(modifiedChunkPosition, (*modifiedChunk)->GetBlocks()))
+			// {
+			// 	result = false;
+			// }
 		}
 	}
 	return result;

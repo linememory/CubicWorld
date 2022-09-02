@@ -45,23 +45,6 @@ bool TChunkData::RemoveBlock(const FIntVector& Position)
 	return false;
 }
 
-TMap<FIntVector, FBlock> TChunkData::GetBlocks() const
-{
-	TMap<FIntVector, FBlock> BlocksMap;
-	for (int Z = 0; Z < ChunkSize.Z; ++Z)
-	{
-		for (int Y = 0; Y < ChunkSize.Y; ++Y)
-		{
-			for (int X = 0; X < ChunkSize.X; ++X)
-			{
-				FIntVector Position{X,Y,Z};
-				BlocksMap.Add(Position, Blocks[GetBlockIndex(Position)]);
-			}
-		}
-	}
-	return BlocksMap;
-}
-
 bool TChunkData::IsEmpty() const
 {
 	return Blocks.Num() == 0;

@@ -40,8 +40,8 @@ public:
 	UFUNCTION(BlueprintCallable)
 	void SetBlocks(TMap<FIntVector, FBlock> InBlocks);
 
-	UFUNCTION(BlueprintCallable)
-	TMap<FIntVector, FBlock> GetBlocks() const;
+	// UFUNCTION(BlueprintCallable)
+	// TMap<FIntVector, FBlock> GetBlocks() const;
 
 	UFUNCTION(BlueprintCallable)
 	void SetChunkConfig(const FChunkConfig& InChunkConfig)

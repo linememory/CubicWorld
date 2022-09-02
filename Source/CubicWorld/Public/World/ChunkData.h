@@ -5,6 +5,7 @@
 #include "CoreMinimal.h"
 #include "Structs/Block.h"
 
+struct Iterator;
 
 /**
  * 
@@ -30,9 +31,13 @@ public:
 	FBlock GetBlock(const FIntVector& Position) const;
 	bool SetBlock(const FIntVector& Position, const FBlock& Block);
 	bool RemoveBlock(const FIntVector& Position);
-	TMap<FIntVector, FBlock> GetBlocks() const;
-
 	bool IsEmpty() const;
 
+	TArray<FBlock>::RangedForIteratorType begin() { return Blocks.begin(); }
+	TArray<FBlock>::RangedForIteratorType end()   { return Blocks.end(); }
+
+	TArray<FBlock>::RangedForConstIteratorType begin() const{ return Blocks.begin(); }
+	TArray<FBlock>::RangedForConstIteratorType end() const  { return Blocks.end(); }
 	
 };
+

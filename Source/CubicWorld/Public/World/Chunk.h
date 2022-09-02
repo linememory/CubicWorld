@@ -20,6 +20,10 @@ private:
 	//UPROPERTY(BlueprintSetter = SetBlocks, BlueprintGetter = GetBlocks)
 	TChunkData Blocks;
 
+public:
+	TMap<FIntVector, UChunk*>* WorldChunks;
+	
+	bool bIsReady = false;
 
 public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)

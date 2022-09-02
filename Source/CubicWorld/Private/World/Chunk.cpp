@@ -16,6 +16,58 @@ bool UChunk::RemoveBlock(const FIntVector Position)
 
 FBlock UChunk::GetBlock(const FIntVector& Position) const
 {
+	const FIntVector ChunkPosition = ChunkConfig.Position;
+	const FIntVector ChunkSize = ChunkConfig.WorldConfig.ChunkSize;
+	if(Position.X < 0)
+	{
+		if(const auto chunk = WorldChunks->Find(ChunkPosition+FIntVector(-1,0,0)); chunk != nullptr && *chunk != nullptr)
+		{
+			return (*chunk)->GetBlock(Position+FIntVector{ChunkSize.X, 0, 0});
+		}
+		
+		UE_LOG(LogTemp, Warning, TEXT("TTT"))
+		
+	}
+	if(Position.X >= ChunkSize.X)
+	{
+		if(const auto chunk = WorldChunks->Find(ChunkPosition+FIntVector(1,0,0)); chunk != nullptr && *chunk != nullptr)
+		{
+			return (*chunk)->GetBlock(Position-FIntVector{ChunkSize.X, 0, 0});
+		}
+		UE_LOG(LogTemp, Warning, TEXT("TTT"))
+	}
+	if(Position.Y < 0)
+	{
+		if(const auto chunk = WorldChunks->Find(ChunkPosition+FIntVector(0,-1,0)); chunk != nullptr && *chunk != nullptr)
+		{
+			return (*chunk)->GetBlock(Position+FIntVector{0, ChunkSize.Y, 0});
+		}
+		UE_LOG(LogTemp, Warning, TEXT("TTT"))
+	}
+	if(Position.Y >= ChunkSize.Y)
+	{
+		if(const auto chunk = WorldChunks->Find(ChunkPosition+FIntVector(0,1,0)); chunk != nullptr && *chunk != nullptr)
+		{
+			return (*chunk)->GetBlock(Position-FIntVector{0, ChunkSize.Y, 0});
+		}
+		UE_LOG(LogTemp, Warning, TEXT("TTT"))
+	}
+	if(Position.Z < 0)
+	{
+		if(const auto chunk = WorldChunks->Find(ChunkPosition+FIntVector(0,0,-1)); chunk != nullptr && *chunk != nullptr)
+		{
+			return (*chunk)->GetBlock(Position+FIntVector{0, 0, ChunkSize.Z});
+		}
+		UE_LOG(LogTemp, Warning, TEXT("TTT"))
+	}
+	if(Position.Z >= ChunkSize.Z)
+	{
+		if(const auto chunk = WorldChunks->Find(ChunkPosition+FIntVector(0,0,1)); chunk != nullptr && *chunk != nullptr)
+		{
+			return (*chunk)->GetBlock(Position-FIntVector{0, 0, ChunkSize.Z});
+		}
+		UE_LOG(LogTemp, Warning, TEXT("TTT"))
+	}
 	return Blocks.GetBlock(Position);
 }
 
@@ -30,5 +82,6 @@ void UChunk::SetBlocks(const TMap<FIntVector, FBlock> InBlocks)
 	{
 		Blocks.SetBlock(block.Key, block.Value);
 	}
+	bIsReady = true;
 }
 

@@ -77,7 +77,7 @@ void AChunkMesh::GenerateMesh()
 
 void AChunkMesh::ShowDebugLines(bool ChunkDebugLines, bool BlocksDebugLines, bool GridDebugLines) const
 {
-	const FWorldConfig& WorldConfig = Chunk->ChunkConfig.WorldConfig;
+	const FWorldConfig& WorldConfig = Chunk->GetChunkConfig().WorldConfig;
 	if(ChunkDebugLines)
 	{
 		DrawDebugBox(GetWorld(), GetActorLocation()+WorldConfig.GetChunkWorldSize()*FVector(0,0,0.5f), WorldConfig.GetChunkWorldSize()/2, FColor::Orange, true, -1, 0, 2);

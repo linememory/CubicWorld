@@ -183,7 +183,7 @@ void AWorldManager::GenerateChunks()
 		{
 			const FChunkConfig chunkConfig = FChunkConfig(WorldConfig, chunkPosition);
 			UChunk* chunk = NewObject<UChunk>();
-			chunk->ChunkConfig = chunkConfig;
+			chunk->SetChunkConfig(chunkConfig);
 			chunk->WorldChunks = &Chunks;
 			Chunks.Add(chunkPosition, chunk);
 

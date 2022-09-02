@@ -17,8 +17,9 @@ class CUBICWORLD_API UChunk final : public UObject
 {
 	GENERATED_BODY()
 private:
-	//UPROPERTY(BlueprintSetter = SetBlocks, BlueprintGetter = GetBlocks)
 	TChunkData Blocks;
+	UPROPERTY()
+	FChunkConfig ChunkConfig;
 
 public:
 	TMap<FIntVector, UChunk*>* WorldChunks;
@@ -26,8 +27,6 @@ public:
 	bool bIsReady = false;
 
 public:
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	FChunkConfig ChunkConfig;
 
 public:
 	UFUNCTION(BlueprintCallable)
@@ -42,5 +41,17 @@ public:
 	void SetBlocks(TMap<FIntVector, FBlock> InBlocks);
 
 	UFUNCTION(BlueprintCallable)
-	const TMap<FIntVector, FBlock>& GetBlocks() const;
+	TMap<FIntVector, FBlock> GetBlocks() const;
+
+	UFUNCTION(BlueprintCallable)
+	void SetChunkConfig(const FChunkConfig& InChunkConfig)
+	{
+		ChunkConfig = InChunkConfig;
+		Blocks = TChunkData(ChunkConfig.WorldConfig.ChunkSize);
+	}
+
+	const FChunkConfig& GetChunkConfig() const
+	{
+		return ChunkConfig;
+	}
 };

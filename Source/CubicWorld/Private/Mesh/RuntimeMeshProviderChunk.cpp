@@ -14,12 +14,12 @@ DECLARE_CYCLE_STAT(TEXT("Generate tile collsion mesh"), STAT_GenerateTileCollisi
 void URuntimeMeshProviderChunk::Initialize()
 {
 	FScopeLock Lock(&PropertySyncRoot);
-	const FWorldConfig WorldConfig = Chunk->ChunkConfig.WorldConfig;
+	const FWorldConfig WorldConfig = Chunk->GetChunkConfig().WorldConfig;
 	UMaterialInterface* Material = WorldConfig.Material;
 	SetupMaterialSlot(0, FName("Chunk Base"), Material);
 	
 	// Setup LODs
-	const auto LODConfig = Chunk->ChunkConfig.WorldConfig.LODs;
+	const auto LODConfig = WorldConfig.LODs;
 	TArray<FRuntimeMeshLODProperties> LODs;
 	for (const auto lod : LODConfig)
 	{
@@ -55,7 +55,7 @@ void URuntimeMeshProviderChunk::Initialize()
 
 FBoxSphereBounds URuntimeMeshProviderChunk::GetBounds()
 {
-	const FVector extend = Chunk->ChunkConfig.WorldConfig.GetChunkWorldSize();
+	const FVector extend = Chunk->GetChunkConfig().WorldConfig.GetChunkWorldSize();
 	return FBoxSphereBounds(FBox(-extend*0.5f, (extend*0.5f)).ShiftBy(FVector(0,0,extend.Z/2)));
 }
 
@@ -133,7 +133,7 @@ void URuntimeMeshProviderChunk::GreedyMesh(FRuntimeMeshRenderableMeshData& MeshD
 	SCOPED_NAMED_EVENT(URuntimeMeshProviderChunk_GenerateGreedyMesh, FColor::Cyan);
 
 	
-	const FWorldConfig& WorldConfig = Chunk->ChunkConfig.WorldConfig;
+	const FWorldConfig& WorldConfig = Chunk->GetChunkConfig().WorldConfig;
 
 	struct FState
 	{

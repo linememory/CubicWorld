@@ -4,30 +4,62 @@
 #include "World/ChunkData.h"
 
 
+int32 TChunkData::GetBlockIndex(const FIntVector& Position) const
+{
+	if(	Position.X < 0 || Position.X > ChunkSize.X ||
+		Position.Y < 0 || Position.Y > ChunkSize.Y ||
+		Position.Z < 0 || Position.Z > ChunkSize.Z)
+	{
+		return -1;
+	}
+	return Position.Z * ChunkSize.X * ChunkSize.Y + Position.Y * ChunkSize.X + Position.X;
+}
+
 FBlock TChunkData::GetBlock(const FIntVector& Position) const
 {
-	const auto Block = Blocks.Find(Position);;
-	return Block != nullptr ? *Block : Air;
+	const int32 index = GetBlockIndex(Position);
+	return index >= 0 && index < Blocks.Num() ? Blocks[index] : Air;
 }
 
 bool TChunkData::SetBlock(const FIntVector& Position, const FBlock& Block)
 {
-	if(Block == Air)
+	if(const int32 index = GetBlockIndex(Position); index >= 0 && index < Blocks.Num())
 	{
-		return RemoveBlock(Position);
+		if(Block == Air)
+		{
+			return RemoveBlock(Position);
+		}
+		Blocks[index] = Block;
+		return true;
 	}
-	Blocks.Add(Position, Block);
-	return true;
+	return false;
 }
 
 bool TChunkData::RemoveBlock(const FIntVector& Position)
 {
-	return Blocks.Remove(Position) > 0 ? true : false;
+	if(const int32 index = GetBlockIndex(Position); index >= 0 && index < Blocks.Num())
+	{
+		Blocks[index] = Air;
+		return true;
+	}
+	return false;
 }
 
-const TMap<FIntVector, FBlock>& TChunkData::GetBlocks() const
+TMap<FIntVector, FBlock> TChunkData::GetBlocks() const
 {
-	return Blocks;
+	TMap<FIntVector, FBlock> BlocksMap;
+	for (int Z = 0; Z < ChunkSize.Z; ++Z)
+	{
+		for (int Y = 0; Y < ChunkSize.Y; ++Y)
+		{
+			for (int X = 0; X < ChunkSize.X; ++X)
+			{
+				FIntVector Position{X,Y,Z};
+				BlocksMap.Add(Position, Blocks[GetBlockIndex(Position)]);
+			}
+		}
+	}
+	return BlocksMap;
 }
 
 bool TChunkData::IsEmpty() const

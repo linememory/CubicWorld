@@ -63,7 +63,7 @@ FBlock UChunk::GetBlock(const FIntVector& Position) const
 	return Blocks.GetBlock(Position);
 }
 
-const TMap<FIntVector, FBlock>& UChunk::GetBlocks() const
+TMap<FIntVector, FBlock> UChunk::GetBlocks() const
 {
 	return Blocks.GetBlocks();
 }

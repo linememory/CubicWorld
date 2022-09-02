@@ -487,7 +487,6 @@ void URuntimeMeshProviderChunk::GreedyMesh(FRuntimeMeshRenderableMeshData& MeshD
 FSides URuntimeMeshProviderChunk::GetSidesToRender(const FIntVector InPosition) const
 {
 	FSides SidesToRender(true);
-	const FIntVector ChunkSize = Chunk->ChunkConfig.WorldConfig.ChunkSize;
 	if(const auto block = Chunk->GetBlock({InPosition.X, InPosition.Y, InPosition.Z+1});
 		block != Air) // Top
 	{

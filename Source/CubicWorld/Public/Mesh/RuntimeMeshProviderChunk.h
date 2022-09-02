@@ -24,7 +24,7 @@ private:
 
 	UPROPERTY(BlueprintGetter = GetChunk, BlueprintSetter = SetChunk)
 	const UChunk *Chunk;
-
+	
 	UPROPERTY()
 	TArray<FVector> BlockVertices;
 
@@ -108,11 +108,7 @@ struct FSides
 	{
 		return Sides && InSide;
 	}
-
-	// bool operator==(const uint8 InSide) const
-	// {
-	// 	return Sides && InSide;
-	// }
+	
 	bool operator==(const FSides& rhs) const
 	{
 		return Sides && rhs.Sides;

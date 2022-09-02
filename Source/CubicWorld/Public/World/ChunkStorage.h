@@ -20,6 +20,6 @@ public:
 
 public:
 	UChunkStorage();
-	bool SaveChunk(FIntVector InPosition, TMap<FIntVector, FBlock> InBlocks) const;
-	TOptional<TMap<FIntVector, FBlock>> LoadChunk(const FIntVector &InPosition) const;
+	bool SaveChunk(const FIntVector& InPosition, const TChunkData& InBlocks) const;
+	TOptional<TChunkData> LoadChunk(const FIntVector &InPosition) const;
 };

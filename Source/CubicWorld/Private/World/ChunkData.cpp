@@ -35,6 +35,16 @@ bool TChunkData::SetBlock(const FIntVector& Position, const FBlock& Block)
 	return false;
 }
 
+void TChunkData::SetBlocks(const TArray<FBlock>& InBlocks)
+{
+	Blocks = InBlocks;
+}
+
+const TArray<FBlock>& TChunkData::GetBlocks()
+{
+	return Blocks;
+}
+
 bool TChunkData::RemoveBlock(const FIntVector& Position)
 {
 	if(const int32 index = GetBlockIndex(Position); index >= 0 && index < Blocks.Num())

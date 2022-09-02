@@ -192,31 +192,20 @@ void AWorldManager::GenerateChunks()
 				GeneratorRunner->Results.Enqueue({chunkPosition, tiles.GetValue()});
 			} else
 			{
-				GeneratorRunner->Tasks.Enqueue({chunkPosition, TMap<FIntVector, FBlock>()});
+				GeneratorRunner->Tasks.Enqueue({chunkPosition, TChunkData(chunkConfig.WorldConfig.ChunkSize)});
 			}
 		}
 	}
 
 	{
-		TPair<FIntVector, TMap<FIntVector, FBlock>> tiles;
+		TPair<FIntVector, TChunkData> tiles;
 		SCOPED_NAMED_EVENT(AWorldManager_GetGeneratedBlocks, FColor::Blue);
 		while (GeneratorRunner->Results.Dequeue(tiles))
 		{
-			bool hasGeometry = !tiles.Value.IsEmpty();
-			for (int Y = 0; Y < WorldConfig.ChunkSize.Y && hasGeometry; ++Y)
-			{
-				for (int X = 0; X < WorldConfig.ChunkSize.X && hasGeometry; ++X)
-				{
-					if(const FBlock* foundBlock = tiles.Value.Find(FIntVector(X, Y, WorldConfig.ChunkSize.Z)); foundBlock == nullptr)
-					{
-						hasGeometry = true;
-					}
-				}
-			}
 			if(UChunk** chunk = Chunks.Find(tiles.Key); chunk != nullptr && *chunk != nullptr)
 			{
 				(*chunk)->SetBlocks(tiles.Value);
-				if(hasGeometry && VisibleChunks.Find(tiles.Key) != nullptr)
+				if(VisibleChunks.Find(tiles.Key) != nullptr)
 					ChunkMeshesToGenerate.Enqueue(tiles.Key);
 			}
 		}
@@ -361,12 +350,13 @@ void AWorldManager::SetBlock(const FIntVector& InPosition, const FBlock& InBlock
 	
 	if(const auto chunk = Chunks.Find(chunkPosition); chunk != nullptr && *chunk != nullptr)
 	{
+		(*chunk)->AddBlock(tilePosition, InBlock);
+		ChunkMeshesToGenerate.Enqueue(chunkPosition);
 		if(tilePosition.X == 0)
 		{
 			const FIntVector Position = chunkPosition-FIntVector(1,0,0);
 			if(const auto neighbor = Chunks.Find(chunkPosition-FIntVector(1,0,0)); neighbor != nullptr && *neighbor != nullptr)
 			{
-				(*neighbor)->AddBlock(FIntVector(WorldConfig.ChunkSize.X, tilePosition.Y, tilePosition.Z), InBlock);
 				ChunkMeshesToGenerate.Enqueue(Position);
 			}
 		}
@@ -375,7 +365,6 @@ void AWorldManager::SetBlock(const FIntVector& InPosition, const FBlock& InBlock
 			const FIntVector Position = chunkPosition-FIntVector(0,1,0);
 			if(const auto neighbor = Chunks.Find(chunkPosition-FIntVector(0,1,0)); neighbor != nullptr && *neighbor != nullptr)
 			{
-				(*neighbor)->AddBlock(FIntVector(tilePosition.X, WorldConfig.ChunkSize.Y, tilePosition.Z), InBlock);
 				ChunkMeshesToGenerate.Enqueue(Position);
 			}
 		}
@@ -384,7 +373,6 @@ void AWorldManager::SetBlock(const FIntVector& InPosition, const FBlock& InBlock
 			const FIntVector Position = chunkPosition-FIntVector(0,0,1);
 			if(const auto neighbor = Chunks.Find(chunkPosition-FIntVector(0,0,1)); neighbor != nullptr && *neighbor != nullptr)
 			{
-				(*neighbor)->AddBlock(FIntVector(tilePosition.X, tilePosition.Y, WorldConfig.ChunkSize.Z), InBlock);
 				ChunkMeshesToGenerate.Enqueue(Position);
 			}
 		}
@@ -394,7 +382,6 @@ void AWorldManager::SetBlock(const FIntVector& InPosition, const FBlock& InBlock
 			const FIntVector Position = chunkPosition+FIntVector(1,0,0);
 			if(const auto neighbor = Chunks.Find(chunkPosition+FIntVector(1,0,0)); neighbor != nullptr && *neighbor != nullptr)
 			{
-				(*neighbor)->AddBlock(FIntVector(-1, tilePosition.Y, tilePosition.Z), InBlock);
 				ChunkMeshesToGenerate.Enqueue(Position);
 			}
 		}
@@ -403,7 +390,6 @@ void AWorldManager::SetBlock(const FIntVector& InPosition, const FBlock& InBlock
 			const FIntVector Position = chunkPosition+FIntVector(0,1,0);
 			if(const auto neighbor = Chunks.Find(chunkPosition+FIntVector(0,1,0)); neighbor != nullptr && *neighbor != nullptr)
 			{
-				(*neighbor)->AddBlock(FIntVector(tilePosition.X, -1, tilePosition.Z), InBlock);
 				ChunkMeshesToGenerate.Enqueue(Position);
 			}
 		}
@@ -412,13 +398,9 @@ void AWorldManager::SetBlock(const FIntVector& InPosition, const FBlock& InBlock
 			const FIntVector Position = chunkPosition+FIntVector(0,0,1) ;
 			if(const auto neighbor = Chunks.Find(chunkPosition+FIntVector(0,0,1)); neighbor != nullptr && *neighbor != nullptr)
 			{
-				(*neighbor)->AddBlock(FIntVector(tilePosition.X, tilePosition.Y, -1), InBlock);
 				ChunkMeshesToGenerate.Enqueue(Position);
 			}
 		}
-		
-		(*chunk)->AddBlock(tilePosition, InBlock);
-		ChunkMeshesToGenerate.Enqueue(chunkPosition);
 	}
 }
 
@@ -428,34 +410,34 @@ FBlock AWorldManager::RemoveBlock(const FIntVector& InPosition)
 	const FIntVector tilePosition = GetBlockPositionFromWorldBlockCoordinates(InPosition);
 
 	const FBlock block = GetBlock(InPosition);
-	if(block != FBlock())
+	if(block != Air)
 	{
 		RemoveBlock(chunkPosition, tilePosition);
 
 		// Update Neighbors
 		if( tilePosition.X == 0)
 		{
-			RemoveBlock(chunkPosition+FIntVector(-1,0,0), tilePosition+FIntVector(WorldConfig.ChunkSize.X, 0, 0));
+			ChunkMeshesToGenerate.Enqueue(chunkPosition+FIntVector(-1,0,0));
 		}
 		if(tilePosition.Y == 0)
 		{
-			RemoveBlock(chunkPosition+FIntVector(0,-1,0), tilePosition+FIntVector(0, WorldConfig.ChunkSize.Y, 0));
+			ChunkMeshesToGenerate.Enqueue(chunkPosition+FIntVector(0,-1,0));
 		}
 		if(tilePosition.Z == 0)
 		{
-			RemoveBlock(chunkPosition+FIntVector(0,0,-1), tilePosition+FIntVector(0, 0, WorldConfig.ChunkSize.Z));
+			ChunkMeshesToGenerate.Enqueue(chunkPosition+FIntVector(0,0,-1));
 		}
 		if(tilePosition.X == WorldConfig.ChunkSize.X-1)
 		{
-			RemoveBlock(chunkPosition+FIntVector(1,0,0), tilePosition-FIntVector(WorldConfig.ChunkSize.X, 0, 0));
+			ChunkMeshesToGenerate.Enqueue(chunkPosition+FIntVector(1,0,0));
 		}
 		if(tilePosition.Y == WorldConfig.ChunkSize.Y-1)
 		{
-			RemoveBlock(chunkPosition+FIntVector(0,1,0), tilePosition-FIntVector(0, WorldConfig.ChunkSize.Y, 0));
+			ChunkMeshesToGenerate.Enqueue(chunkPosition+FIntVector(0,1,0));
 		}
 		if(tilePosition.Z == WorldConfig.ChunkSize.Z-1)
 		{
-			RemoveBlock(chunkPosition+FIntVector(0,0,1), tilePosition-FIntVector(0, 0, WorldConfig.ChunkSize.Z));
+			ChunkMeshesToGenerate.Enqueue(chunkPosition+FIntVector(0,0,1));
 		}
 	}
 	return block;
@@ -482,10 +464,10 @@ bool AWorldManager::SaveWorld()
 	{
 		if(const auto modifiedChunk = Chunks.Find(modifiedChunkPosition); modifiedChunk != nullptr && *modifiedChunk != nullptr)
 		{
-			// if(!ChunkStorage->SaveChunk(modifiedChunkPosition, (*modifiedChunk)->GetBlocks()))
-			// {
-			// 	result = false;
-			// }
+			if(!ChunkStorage->SaveChunk(modifiedChunkPosition, (*modifiedChunk)->GetBlocks()))
+			{
+				result = false;
+			}
 		}
 	}
 	return result;

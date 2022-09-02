@@ -3,6 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "ChunkData.h"
 #include "Structs/ChunkConfig.h"
 #include "Structs/Block.h"
 #include "UObject/Object.h"
@@ -16,8 +17,7 @@ class CUBICWORLD_API UGenerator : public UObject
 {
 	GENERATED_BODY()
 public:
-	UFUNCTION()
-	void GenerateChunk(const FChunkConfig& ChunkConfig, TMap<FIntVector, FBlock>& Blocks);
+	void GenerateChunk(const FChunkConfig& ChunkConfig, TChunkData& Blocks);
 	
 	virtual TOptional<FBlock> GetTile(const FIntVector &Position, const FWorldConfig &WorldConfig)
 	{

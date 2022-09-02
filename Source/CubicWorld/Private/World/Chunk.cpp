@@ -63,17 +63,14 @@ FBlock UChunk::GetBlock(const FIntVector& Position) const
 	return Blocks.GetBlock(Position);
 }
 
-// TMap<FIntVector, FBlock> UChunk::GetBlocks() const
-// {
-// 	return Blocks.GetBlocks();
-// }
-
-void UChunk::SetBlocks(const TMap<FIntVector, FBlock> InBlocks)
+void UChunk::SetBlocks(const TChunkData& InBlocks)
 {
-	for(auto block : InBlocks)
-	{
-		Blocks.SetBlock(block.Key, block.Value);
-	}
+	Blocks = InBlocks;
 	bIsReady = true;
+}
+
+const TChunkData& UChunk::GetBlocks()
+{
+	return Blocks;
 }
 

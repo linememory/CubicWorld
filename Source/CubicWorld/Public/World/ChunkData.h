@@ -22,16 +22,24 @@ private:
 	
 public:
 	TChunkData(){}
-	explicit TChunkData(const FIntVector& InChunkSize): ChunkSize(InChunkSize)
+	explicit TChunkData(const FIntVector& InChunkSize, const TArray<FBlock>& InBlocks = TArray<FBlock>()): ChunkSize(InChunkSize), Blocks(InBlocks)
 	{
-		Blocks.Init(Air, GetBlockIndex(InChunkSize-FIntVector(1))+1);
+		if(Blocks.IsEmpty())
+			Blocks.Init(Air, GetBlockIndex(InChunkSize-FIntVector(1))+1);
 	}
 
 public:
 	FBlock GetBlock(const FIntVector& Position) const;
 	bool SetBlock(const FIntVector& Position, const FBlock& Block);
+	void SetBlocks(const TArray<FBlock>& InBlocks);
+	const TArray<FBlock>& GetBlocks();
 	bool RemoveBlock(const FIntVector& Position);
 	bool IsEmpty() const;
+
+	const FIntVector& GetChunkSize() const
+	{
+		return ChunkSize;
+	}
 
 	TArray<FBlock>::RangedForIteratorType begin() { return Blocks.begin(); }
 	TArray<FBlock>::RangedForIteratorType end()   { return Blocks.end(); }

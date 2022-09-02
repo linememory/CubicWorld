@@ -24,9 +24,6 @@ FBlock UChunk::GetBlock(const FIntVector& Position) const
 		{
 			return (*chunk)->GetBlock(Position+FIntVector{ChunkSize.X, 0, 0});
 		}
-		
-		UE_LOG(LogTemp, Warning, TEXT("TTT"))
-		
 	}
 	if(Position.X >= ChunkSize.X)
 	{
@@ -34,7 +31,6 @@ FBlock UChunk::GetBlock(const FIntVector& Position) const
 		{
 			return (*chunk)->GetBlock(Position-FIntVector{ChunkSize.X, 0, 0});
 		}
-		UE_LOG(LogTemp, Warning, TEXT("TTT"))
 	}
 	if(Position.Y < 0)
 	{
@@ -42,7 +38,6 @@ FBlock UChunk::GetBlock(const FIntVector& Position) const
 		{
 			return (*chunk)->GetBlock(Position+FIntVector{0, ChunkSize.Y, 0});
 		}
-		UE_LOG(LogTemp, Warning, TEXT("TTT"))
 	}
 	if(Position.Y >= ChunkSize.Y)
 	{
@@ -50,7 +45,6 @@ FBlock UChunk::GetBlock(const FIntVector& Position) const
 		{
 			return (*chunk)->GetBlock(Position-FIntVector{0, ChunkSize.Y, 0});
 		}
-		UE_LOG(LogTemp, Warning, TEXT("TTT"))
 	}
 	if(Position.Z < 0)
 	{
@@ -58,7 +52,6 @@ FBlock UChunk::GetBlock(const FIntVector& Position) const
 		{
 			return (*chunk)->GetBlock(Position+FIntVector{0, 0, ChunkSize.Z});
 		}
-		UE_LOG(LogTemp, Warning, TEXT("TTT"))
 	}
 	if(Position.Z >= ChunkSize.Z)
 	{
@@ -66,7 +59,6 @@ FBlock UChunk::GetBlock(const FIntVector& Position) const
 		{
 			return (*chunk)->GetBlock(Position-FIntVector{0, 0, ChunkSize.Z});
 		}
-		UE_LOG(LogTemp, Warning, TEXT("TTT"))
 	}
 	return Blocks.GetBlock(Position);
 }

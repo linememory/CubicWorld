@@ -276,7 +276,8 @@ void AWorldManager::UnloadChunks()
 		{
 			(*chunkMesh)->Destroy();
 		}
-		Chunks.Remove(position);
+		if(ModifiedChunks.Find(position) == INDEX_NONE)
+			Chunks.Remove(position);
 		VisibleChunks.Remove(position);
 		ChunkMeshes.Remove(position);
 	}
@@ -287,11 +288,6 @@ void AWorldManager::UnloadChunks()
 TArray<FBlockType> AWorldManager::GetBlockTypes() const
 {
 	return WorldConfig.BlockTypes;
-}
-
-void AWorldManager::SetBlockTypes(const TArray<FBlockType> InBlockTypes)
-{
-	WorldConfig.BlockTypes = InBlockTypes;
 }
 
 void AWorldManager::AddActorToTrack(AActor* InActorToTrack)

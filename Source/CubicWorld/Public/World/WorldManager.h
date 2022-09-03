@@ -74,8 +74,6 @@ public:
 
 	UFUNCTION(BlueprintCallable)
 	TArray<FBlockType> GetBlockTypes() const;
-	UFUNCTION(BlueprintCallable)
-	void SetBlockTypes(TArray<FBlockType> InBlockTypes);
 
 	void AddActorToTrack(AActor *InActorToTrack);
 

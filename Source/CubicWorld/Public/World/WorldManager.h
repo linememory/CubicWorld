@@ -86,6 +86,9 @@ public:
 	FIntVector GetBlockCoordinatesFromWorldLocation(const FVector& Location) const;
 
 	UFUNCTION(BlueprintCallable)
+	FVector GetWorldLocationFromBlockCoordinates(const FIntVector& Location) const;
+
+	UFUNCTION(BlueprintCallable)
 	FBlock GetBlock(const FIntVector& InPosition) const;
 
 	UFUNCTION(BlueprintCallable)

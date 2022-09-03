@@ -320,6 +320,12 @@ FIntVector AWorldManager::GetBlockCoordinatesFromWorldLocation(const FVector& Lo
 	return blockLocation;
 }
 
+FVector AWorldManager::GetWorldLocationFromBlockCoordinates(const FIntVector& BlockCoordinates) const
+{
+	const FVector Location = FVector(BlockCoordinates)*WorldConfig.BlockSize - WorldConfig.GetChunkWorldSize()/2*FVector(1.0f, 1.0f, 0.0f)+WorldConfig.BlockSize/2*FVector(1.0f, 1.0f, 0.0f);
+	return Location;
+}
+
 FBlock AWorldManager::GetBlock(const FIntVector& InPosition) const
 {
 	const FIntVector chunkPosition = GetChunkPositionFromBlockWorldCoordinates(InPosition);

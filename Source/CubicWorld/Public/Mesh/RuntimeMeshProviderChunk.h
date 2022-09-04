@@ -38,11 +38,14 @@ public:
 	bool bMarkedForDestroy = false;
 
 private:
-	static uint32 AddVertex(FRuntimeMeshRenderableMeshData& MeshData, const FVector& InPosition, const FVector& InNormal, const FVector& InTangent, const FVector2f& InUV, const FVector2f& InTexCoord, const FColor& InColor = FColor::White);
-	static void AddQuad(FRuntimeMeshRenderableMeshData &MeshData, const FVector& Vertex1, const FVector& Vertex2, const FVector& Vertex3, const FVector& Vertex4,
+	static uint32 AddVertex(FRuntimeMeshRenderableMeshData& MeshData,
+					const FVector& InPosition,
+					const FVector& InNormal, const FVector& InTangent,
+					const FVector2f& UV1, const FVector2f& UV2, const FColor& InColor = FColor::White);
+	static void AddQuad(FRuntimeMeshRenderableMeshData &MeshData,
+					const FVector& Vertex1, const FVector& Vertex2, const FVector& Vertex3, const FVector& Vertex4,
 					const FVector& Normal, const FVector& Tangent,
-					const FVector2f TextureOffset, const FVector2f UVMultiplication,
-					const FColor& Color);
+					const uint32 TextureId,	const FVector2f& UVMultiplication, const FColor& Color);
 	void GreedyMesh(FRuntimeMeshRenderableMeshData& MeshData);
 	
 	FSides GetSidesToRender(FIntVector InPosition) const;

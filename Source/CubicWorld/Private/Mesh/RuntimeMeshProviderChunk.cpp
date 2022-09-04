@@ -80,24 +80,24 @@ bool URuntimeMeshProviderChunk::GetSectionMeshForLOD(const int32 LODIndex, const
 
 uint32 URuntimeMeshProviderChunk::AddVertex(FRuntimeMeshRenderableMeshData& MeshData, const FVector& InPosition,
 	const FVector& InNormal, const FVector& InTangent,
-	const FVector2f& InUV, const FVector2f& InTexCoord, const FColor& InColor)
+	const FVector2f& UV1, const FVector2f& UV2, const FColor& InColor)
 {
 	const int32 index = MeshData.Positions.Add(FVector3f(InPosition));
 	MeshData.Tangents.Add(FVector3f(InNormal), FVector3f(InTangent));
 	MeshData.Colors.Add(InColor);
-	MeshData.TexCoords.Add({InUV, InTexCoord});
+	MeshData.TexCoords.Add({UV1, UV2});
 	return index;
 }
 
 void URuntimeMeshProviderChunk::AddQuad(FRuntimeMeshRenderableMeshData& MeshData, const FVector& Vertex1,
 	const FVector& Vertex2, const FVector& Vertex3, const FVector& Vertex4,
-	const FVector& Normal, const FVector& Tangent, const FVector2f TextureOffset,
-	const FVector2f UVMultiplication, const FColor& Color)
+	const FVector& Normal, const FVector& Tangent,
+	const uint32 TextureId, const FVector2f& UVMultiplication, const FColor& Color)
 {
-	const int32 idx0 = AddVertex(MeshData, Vertex1, Normal, Tangent, FVector2f(0, 1)*UVMultiplication,	TextureOffset, Color);
-	const int32 idx1 = AddVertex(MeshData, Vertex2, Normal, Tangent, FVector2f(0)*UVMultiplication, 		TextureOffset, Color);
-	const int32 idx2 = AddVertex(MeshData, Vertex3, Normal, Tangent, FVector2f(1,0)*UVMultiplication,	TextureOffset, Color);
-	const int32 idx3 = AddVertex(MeshData, Vertex4, Normal, Tangent, FVector2f(1)*UVMultiplication,	TextureOffset, Color);
+	const int32 idx0 = AddVertex(MeshData, Vertex1, Normal, Tangent, FVector2f(0, 1)*UVMultiplication,	FVector2f(TextureId, 0), Color);
+	const int32 idx1 = AddVertex(MeshData, Vertex2, Normal, Tangent, FVector2f(0)*UVMultiplication,		FVector2f(TextureId, 0), Color);
+	const int32 idx2 = AddVertex(MeshData, Vertex3, Normal, Tangent, FVector2f(1,0)*UVMultiplication,	FVector2f(TextureId, 0), Color);
+	const int32 idx3 = AddVertex(MeshData, Vertex4, Normal, Tangent, FVector2f(1)*UVMultiplication,		FVector2f(TextureId, 0), Color);
 					
 	MeshData.Triangles.AddTriangle(idx0, idx2, idx1);
 	MeshData.Triangles.AddTriangle(idx0, idx3, idx2);
@@ -271,7 +271,7 @@ void URuntimeMeshProviderChunk::GreedyMesh(FRuntimeMeshRenderableMeshData& MeshD
 			{
 				FIntVector BlockPosition(X,Y,Z);
 				FBlockData BlockData(Chunk->GetBlock(BlockPosition), BlockPosition, GetSidesToRender(BlockPosition));
-				
+				if(BlockData.Block.BlockTypeID >= WorldConfig.BlockTypes.Num()) continue;
 				// Top
 				GetGreedyTile(Top, BlockData, FSides::Top);
 				if(Top.generateSide)
@@ -290,16 +290,13 @@ void URuntimeMeshProviderChunk::GreedyMesh(FRuntimeMeshRenderableMeshData& MeshD
 					FVector PositionEnd = FVector(Top.end)*WorldConfig.BlockSize - FVector(GetBounds().BoxExtent.X,GetBounds().BoxExtent.Y,0.0f);
 					FVector QuadSize(FVector(Top.end-Top.start) + FVector(1));
 					FVector2f UVMultiplication = FVector2f(QuadSize.X, QuadSize.Y).GetAbs();
-					int textureMapSize = 8;
-					FVector2f textureSize = FVector2f(1.0f/textureMapSize,1.0f/textureMapSize);
-					FVector2f textureOffset = FVector2f(tileType.TextureId%textureMapSize, floor(tileType.TextureId/textureMapSize))*textureSize;
 					AddQuad(MeshData,
 						BlockVertices[7] + FVector(PositionStart.X, PositionEnd.Y, PositionStart.Z),
 						BlockVertices[4] + PositionStart,
 						BlockVertices[5] + FVector(PositionEnd.X, PositionStart.Y, PositionStart.Z),
 						BlockVertices[6] + PositionEnd,
 						{0.0f, 0.0f, 1.0f}, {1.0f, 0.0f, 0.0f},
-						textureOffset, UVMultiplication,
+						tileType.TextureId, UVMultiplication,
 						tileType.Color);
 					Top.active = false;
 					Top.generateSide = false;
@@ -321,20 +318,16 @@ void URuntimeMeshProviderChunk::GreedyMesh(FRuntimeMeshRenderableMeshData& MeshD
 					FBlockType tileType = WorldConfig.BlockTypes[Bottom.block.BlockTypeID];
 					FVector PositionStart = FVector(Bottom.start)*WorldConfig.BlockSize - FVector(GetBounds().BoxExtent.X,GetBounds().BoxExtent.Y,0.0f);
 					FVector PositionEnd = FVector(Bottom.end)*WorldConfig.BlockSize - FVector(GetBounds().BoxExtent.X,GetBounds().BoxExtent.Y,0.0f);
+					FColor Color = tileType.bSideDiffers ? tileType.SideColor : tileType.Color;
 					FVector QuadSize(FVector(Bottom.end-Bottom.start) + FVector(1));
 					FVector2f UVMultiplication = FVector2f(QuadSize.X, QuadSize.Y).GetAbs();
-					int textureMapSize = 8;
-					int TextureId = tileType.bSideDiffers ? tileType.BottomTextureId : tileType.TextureId;
-					FVector2f textureSize = FVector2f(1.0f/textureMapSize,1.0f/textureMapSize);
-					FVector2f textureOffset = FVector2f(TextureId%textureMapSize, floor(TextureId/textureMapSize))*textureSize;
-					FColor Color = tileType.bSideDiffers ? tileType.SideColor : tileType.Color;
 					AddQuad(MeshData,
 						BlockVertices[0] + PositionStart,
 						BlockVertices[3] + FVector(PositionStart.X, PositionEnd.Y, PositionStart.Z),
 						BlockVertices[2] + PositionEnd,
 						BlockVertices[1] + FVector(PositionEnd.X, PositionStart.Y, PositionStart.Z),
 						{0.0f, 0.0f, -1.0f}, {-1.0f, 0.0f, 0.0f},
-						textureOffset, UVMultiplication,
+						tileType.TextureId, UVMultiplication,
 						Color);
 					Bottom.active = false;
 					Bottom.generateSide = false;
@@ -356,20 +349,16 @@ void URuntimeMeshProviderChunk::GreedyMesh(FRuntimeMeshRenderableMeshData& MeshD
 					FBlockType tileType = WorldConfig.BlockTypes[Front.block.BlockTypeID];
 					FVector PositionStart = FVector(Front.start)*WorldConfig.BlockSize - FVector(GetBounds().BoxExtent.X,GetBounds().BoxExtent.Y,0.0f);
 					FVector PositionEnd = FVector(Front.end)*WorldConfig.BlockSize - FVector(GetBounds().BoxExtent.X,GetBounds().BoxExtent.Y,0.0f);
-					FVector QuadSize(FVector(Front.end-Front.start) + FVector(1));
-					FVector2f UVMultiplication = FVector2f(QuadSize.X, QuadSize.Z).GetAbs();
-					int textureMapSize = 8;
-					int TextureId = tileType.bSideDiffers ? tileType.SideTextureId : tileType.TextureId;
-					FVector2f textureSize = FVector2f(1.0f/textureMapSize,1.0f/textureMapSize);
-					FVector2f textureOffset = FVector2f(TextureId%textureMapSize, floor(TextureId/textureMapSize))*textureSize;
 					FColor Color = tileType.bSideDiffers ? tileType.SideColor : tileType.Color;
+					FVector QuadSize(FVector(Front.end-Front.start) + FVector(1));
+					FVector2f UVMultiplication = FVector2f(QuadSize.X, QuadSize.Y).GetAbs();
 					AddQuad(MeshData,
 						BlockVertices[3] + PositionStart,
 						BlockVertices[7] + FVector(PositionStart.X, PositionStart.Y, PositionEnd.Z),
 						BlockVertices[6] + PositionEnd,
 						BlockVertices[2] + FVector(PositionEnd.X, PositionStart.Y, PositionStart.Z),
 						{0.0f, 1.0f, 0.0f}, {1.0f, 0.0f, 0.0f},
-						textureOffset, UVMultiplication,
+						tileType.TextureId, UVMultiplication,
 						Color);
 					Front.active = false;
 					Front.generateSide = false;
@@ -391,20 +380,16 @@ void URuntimeMeshProviderChunk::GreedyMesh(FRuntimeMeshRenderableMeshData& MeshD
 					FBlockType tileType = WorldConfig.BlockTypes[Back.block.BlockTypeID];
 					FVector PositionStart = FVector(Back.end)*WorldConfig.BlockSize - FVector(GetBounds().BoxExtent.X,GetBounds().BoxExtent.Y,0.0f);
 					FVector PositionEnd = FVector(Back.start)*WorldConfig.BlockSize - FVector(GetBounds().BoxExtent.X,GetBounds().BoxExtent.Y,0.0f);
-					FVector QuadSize(FVector(Back.start-Back.end).GetAbs() + FVector(1));
-					FVector2f UVMultiplication = FVector2f(QuadSize.X, QuadSize.Z);
-					int textureMapSize = 8;
-					int TextureId = tileType.bSideDiffers ? tileType.SideTextureId : tileType.TextureId;
-					FVector2f textureSize = FVector2f(1.0f/textureMapSize,1.0f/textureMapSize);
-					FVector2f textureOffset = FVector2f(TextureId%textureMapSize, floor(TextureId/textureMapSize))*textureSize;
 					FColor Color = tileType.bSideDiffers ? tileType.SideColor : tileType.Color;
+					FVector QuadSize(FVector(Back.end-Back.start) + FVector(1));
+					FVector2f UVMultiplication = FVector2f(QuadSize.X, QuadSize.Y).GetAbs();
 					AddQuad(MeshData,
 						BlockVertices[1] + FVector(PositionStart.X, PositionStart.Y, PositionEnd.Z),
 						BlockVertices[5] + PositionStart,
 						BlockVertices[4] + FVector(PositionEnd.X, PositionStart.Y, PositionStart.Z),
 						BlockVertices[0] + PositionEnd,
 						{0.0f, -1.0f, 0.0f}, {-1.0f, 0.0f, 0.0f},
-						textureOffset, UVMultiplication,
+						tileType.TextureId, UVMultiplication,
 						Color);
 					Back.active = false;
 					Back.generateSide = false;
@@ -426,20 +411,16 @@ void URuntimeMeshProviderChunk::GreedyMesh(FRuntimeMeshRenderableMeshData& MeshD
 					FBlockType tileType = WorldConfig.BlockTypes[Right.block.BlockTypeID];
 					FVector PositionStart = FVector(Right.start)*WorldConfig.BlockSize - FVector(GetBounds().BoxExtent.X,GetBounds().BoxExtent.Y,0.0f);
 					FVector PositionEnd = FVector(Right.end)*WorldConfig.BlockSize - FVector(GetBounds().BoxExtent.X,GetBounds().BoxExtent.Y,0.0f);
-					FVector QuadSize(FVector(Right.end-Right.start).GetAbs() + FVector(1));
-					FVector2f UVMultiplication = FVector2f(QuadSize.Y, QuadSize.Z);
-					int textureMapSize = 8;
-					int TextureId = tileType.bSideDiffers ? tileType.SideTextureId : tileType.TextureId;
-					FVector2f textureSize = FVector2f(1.0f/textureMapSize,1.0f/textureMapSize);
-					FVector2f textureOffset = FVector2f(TextureId%textureMapSize, floor(TextureId/textureMapSize))*textureSize;
 					FColor Color = tileType.bSideDiffers ? tileType.SideColor : tileType.Color;
+					FVector QuadSize(FVector(Right.end-Right.start) + FVector(1));
+					FVector2f UVMultiplication = FVector2f(QuadSize.X, QuadSize.Y).GetAbs();
 					AddQuad(MeshData,
 						BlockVertices[2] + FVector(PositionStart.X, PositionEnd.Y, PositionStart.Z),
 						BlockVertices[6] + PositionEnd,
 						BlockVertices[5] + FVector(PositionStart.X, PositionStart.Y, PositionEnd.Z),
 						BlockVertices[1] + PositionStart,
 						{1.0f, 0.0f, 0.0f}, {0.0f, 1.0f, 0.0f},
-						textureOffset, UVMultiplication,
+						tileType.TextureId, UVMultiplication,
 						Color);
 					Right.active = false;
 					Right.generateSide = false;
@@ -461,20 +442,16 @@ void URuntimeMeshProviderChunk::GreedyMesh(FRuntimeMeshRenderableMeshData& MeshD
 					FBlockType tileType = WorldConfig.BlockTypes[Left.block.BlockTypeID];
 					FVector PositionStart = FVector(Left.start)*WorldConfig.BlockSize - FVector(GetBounds().BoxExtent.X,GetBounds().BoxExtent.Y,0.0f);
 					FVector PositionEnd = FVector(Left.end)*WorldConfig.BlockSize - FVector(GetBounds().BoxExtent.X,GetBounds().BoxExtent.Y,0.0f);
-					FVector QuadSize(FVector(Left.end-Left.start) + FVector(1));
-					FVector2f UVMultiplication = FVector2f(QuadSize.Y, QuadSize.Z).GetAbs();
-					int textureMapSize = 8;
-					int TextureId = tileType.bSideDiffers ? tileType.SideTextureId : tileType.TextureId;
-					FVector2f textureSize = FVector2f(1.0f/textureMapSize,1.0f/textureMapSize);
-					FVector2f textureOffset = FVector2f(TextureId%textureMapSize, floor(TextureId/textureMapSize))*textureSize;
 					FColor Color = tileType.bSideDiffers ? tileType.SideColor : tileType.Color;
+					FVector QuadSize(FVector(Left.end-Left.start) + FVector(1));
+					FVector2f UVMultiplication = FVector2f(QuadSize.X, QuadSize.Y).GetAbs();
 					AddQuad(MeshData,
 						BlockVertices[0] + PositionStart,
 						BlockVertices[4] + FVector(PositionStart.X, PositionStart.Y, PositionEnd.Z),
 						BlockVertices[7] + PositionEnd,
 						BlockVertices[3] + FVector(PositionEnd.X, PositionEnd.Y, PositionStart.Z),
 						{-1.0f, 0.0f, 0.0f}, {0.0f, -1.0f, 0.0f},
-						textureOffset, UVMultiplication,
+						tileType.TextureId, UVMultiplication,
 						Color);
 					Left.active = false;
 					Left.generateSide = false;

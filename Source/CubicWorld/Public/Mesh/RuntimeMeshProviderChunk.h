@@ -24,7 +24,7 @@ private:
 
 	UPROPERTY(BlueprintGetter = GetChunk, BlueprintSetter = SetChunk)
 	const UChunk *Chunk;
-
+	
 	UPROPERTY()
 	TArray<FVector> BlockVertices;
 
@@ -38,18 +38,14 @@ public:
 	bool bMarkedForDestroy = false;
 
 private:
-	void AddTile(FRuntimeMeshRenderableMeshData &MeshData, const FBlockConfig& InTileConfig);
 	static uint32 AddVertex(FRuntimeMeshRenderableMeshData& MeshData, const FVector& InPosition, const FVector& InNormal, const FVector& InTangent, const FVector2f& InUV, const FVector2f& InTexCoord, const FColor& InColor = FColor::White);
 	static void AddQuad(FRuntimeMeshRenderableMeshData &MeshData, const FVector& Vertex1, const FVector& Vertex2, const FVector& Vertex3, const FVector& Vertex4,
 					const FVector& Normal, const FVector& Tangent,
 					const FVector2f TextureOffset, const FVector2f UVMultiplication,
 					const FColor& Color);
 	void GreedyMesh(FRuntimeMeshRenderableMeshData& MeshData);
-	void GreedyMesh(FRuntimeMeshRenderableMeshData& MeshData, uint32 LODIndex);
-	void SimpleMesh(FRuntimeMeshRenderableMeshData& MeshData, uint32 LODIndex);
 	
-	FSides GetSidesToRender(FIntVector InPosition, int divider = 1) const;
-	TArray<FBlock> GetBlocks(FIntVector InPosition, int divider = 1) const;
+	FSides GetSidesToRender(FIntVector InPosition) const;
 
 protected:
 	virtual void Initialize() override;
@@ -97,14 +93,14 @@ struct FSides
 		return InSide == (InSide & Sides);
 	}
 
-	void SetSide(const ESide InSide, const bool Unset = false)
+	void SetSide(const ESide InSide, const bool IsSet = false)
 	{
-		if(Unset)
-		{
-			Sides &= (~InSide);
-		} else
+		if(IsSet)
 		{
 			Sides |= InSide;
+		} else
+		{
+			Sides &= (~InSide);
 		}
 	}
 
@@ -112,11 +108,7 @@ struct FSides
 	{
 		return Sides && InSide;
 	}
-
-	// bool operator==(const uint8 InSide) const
-	// {
-	// 	return Sides && InSide;
-	// }
+	
 	bool operator==(const FSides& rhs) const
 	{
 		return Sides && rhs.Sides;

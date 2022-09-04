@@ -70,42 +70,19 @@ void AChunkMesh::GenerateMesh()
 			CollisionSettings.bUseAsyncCooking = true;
 			ChunkCollisionProvider->SetCollisionSettings(CollisionSettings);
 			RMC->Initialize(ChunkCollisionProvider);
-
-			
-			
 		}
 	}
 	
 }
 
-void AChunkMesh::ShowDebugLines(bool ChunkDebugLines, bool BlocksDebugLines, bool GridDebugLines) const
+void AChunkMesh::ShowDebugLines(const bool ChunkDebugLines, const bool BlocksDebugLines, const bool GridDebugLines) const
 {
-	const FWorldConfig& WorldConfig = Chunk->ChunkConfig.WorldConfig;
+	const FWorldConfig& WorldConfig = Chunk->GetChunkConfig().WorldConfig;
 	if(ChunkDebugLines)
 	{
 		DrawDebugBox(GetWorld(), GetActorLocation()+WorldConfig.GetChunkWorldSize()*FVector(0,0,0.5f), WorldConfig.GetChunkWorldSize()/2, FColor::Orange, true, -1, 0, 2);
 	}
-	if(BlocksDebugLines)
-	{
-		for (auto tile : Chunk->GetBlocks())
-		{
-			FVector position = (FVector(tile.Key)+FVector(0.5,0.5,0.5))*WorldConfig.BlockSize + GetActorLocation()+WorldConfig.GetChunkWorldSize()*FVector(0,0,0.5) - WorldConfig.GetChunkWorldSize()/2;
-			DrawDebugBox(GetWorld(), position, WorldConfig.BlockSize/2*1.00015, FColor::Blue, true, -1, 0, 0.5);
-		}
 
-		// // LODs
-		// for (auto tile : Chunk->GetBlocks())
-		// {
-		// 	const int multiplier = 2;
-		// 	if(	tile.Key.X % multiplier == 0 &&
-		// 		tile.Key.Y % multiplier == 0 &&
-		// 		tile.Key.Z % multiplier == 0 ) 
-		// 	{
-		// 		FVector position = (FVector(tile.Key)+FVector(1,1,1))*WorldConfig.BlockSize + GetActorLocation()+WorldConfig.GetChunkWorldSize()*FVector(0,0,0.5) - WorldConfig.GetChunkWorldSize()/2;
-		// 		DrawDebugBox(GetWorld(), position, WorldConfig.BlockSize*1.00025, FColor::Green, true, -1, 0, 1.5);
-		// 	}
-		// }
-	}
 	if(GridDebugLines)
 	{
 		for (int Z = 0; Z < WorldConfig.ChunkSize.Z; Z++)
@@ -115,7 +92,7 @@ void AChunkMesh::ShowDebugLines(bool ChunkDebugLines, bool BlocksDebugLines, boo
 				for (int X = 0; X < WorldConfig.ChunkSize.X; ++X)
 				{
 					FVector position = (FVector(X,Y,Z)+FVector(0.5,0.5,0.5))*WorldConfig.BlockSize + GetActorLocation()+WorldConfig.GetChunkWorldSize()*FVector(0,0,0.5) - WorldConfig.GetChunkWorldSize()/2;
-					if(!(BlocksDebugLines && Chunk->GetBlocks().Find({X,Y,Z}) != nullptr))
+					if(!(BlocksDebugLines && Chunk->GetBlock({X,Y,Z}) != Air))
 					{
 						DrawDebugBox(GetWorld(), position, WorldConfig.BlockSize/2*1.00014, FColor::Purple, true, -1, 0, 0.2);
 					}

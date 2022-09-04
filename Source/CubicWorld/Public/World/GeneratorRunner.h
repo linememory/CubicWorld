@@ -3,6 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "ChunkData.h"
 #include "Generator.h"
 #include "Structs/Block.h"
 
@@ -13,8 +14,8 @@
 class CUBICWORLD_API FGeneratorRunner final : public FRunnable
 {
 public:
-	TQueue<TPair<FIntVector, TMap<FIntVector, FBlock>>> Tasks;
-	TQueue<TPair<FIntVector, TMap<FIntVector, FBlock>>> Results;
+	TQueue<TPair<FIntVector, TChunkData>> Tasks;
+	TQueue<TPair<FIntVector, TChunkData>> Results;
 
 	FGeneratorRunner(UGenerator *InGenerator, const FWorldConfig &InWorldConfig);
 	virtual uint32 Run() override;

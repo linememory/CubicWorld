@@ -10,7 +10,6 @@
 #include "Trackable.h"
 #include "GameFramework/Actor.h"
 #include "Mesh/ChunkMesh.h"
-#include "Structs/ModifiedChunk.h"
 #include "Structs/BlockType.h"
 #include "WorldManager.generated.h"
 
@@ -37,10 +36,9 @@ private:
 	UPROPERTY()
 	TArray<FIntVector> ChunksToUnload;
 	UPROPERTY()
-	TArray<FIntVector> ChunksToRebuild;
-	TQueue<UChunk *> ChunkMeshesToGenerate;
+	TSet<FIntVector> VisibleChunks;
 
-	float MillisSinceLastSave = 0;
+	TQueue<FIntVector> ChunkMeshesToGenerate;
 
 public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
@@ -76,8 +74,6 @@ public:
 
 	UFUNCTION(BlueprintCallable)
 	TArray<FBlockType> GetBlockTypes() const;
-	UFUNCTION(BlueprintCallable)
-	void SetBlockTypes(TArray<FBlockType> InBlockTypes);
 
 	void AddActorToTrack(AActor *InActorToTrack);
 
@@ -88,6 +84,9 @@ public:
 
 	UFUNCTION(BlueprintCallable)
 	FIntVector GetBlockCoordinatesFromWorldLocation(const FVector& Location) const;
+
+	UFUNCTION(BlueprintCallable)
+	FVector GetWorldLocationFromBlockCoordinates(const FIntVector& Location) const;
 
 	UFUNCTION(BlueprintCallable)
 	FBlock GetBlock(const FIntVector& InPosition) const;

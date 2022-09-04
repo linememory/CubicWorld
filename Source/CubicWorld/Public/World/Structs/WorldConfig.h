@@ -14,20 +14,20 @@ struct FWorldConfig
 {
 	GENERATED_BODY()
 	
-	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category="Chunk")
+	UPROPERTY(BlueprintReadOnly, EditAnywhere, Category="Chunk")
 	FIntVector ChunkSize = FIntVector(16,16,16);
-	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category="Chunk")
+	UPROPERTY(BlueprintReadOnly, EditAnywhere, Category="Chunk")
 	int32 MaxChunksZ = 4;
 	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category="Chunk")
 	uint8 MaxChunkRenderDistance = 16;
-	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category="Tiles")
+	UPROPERTY(BlueprintReadOnly, EditAnywhere, Category="Tiles")
 	FVector BlockSize = FVector(100.0f);
-	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category="Tiles")
+	UPROPERTY(BlueprintReadOnly, EditAnywhere, Category="Tiles")
 	TArray<FBlockType> BlockTypes;
 	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category="Material")
 	UMaterialInterface* Material;
 
-	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category="Material")
+	UPROPERTY(BlueprintReadOnly, EditAnywhere, Category="Material")
 	TArray<float> LODs = {1};
 	
 	uint16 GetWorldBlockHeight() const

@@ -124,7 +124,7 @@ bool URuntimeMeshProviderChunk::GetCollisionMesh(FRuntimeMeshCollisionData& Coll
 
 bool URuntimeMeshProviderChunk::IsThreadSafe()
 {
-	return false;
+	return true;
 }
 
 void URuntimeMeshProviderChunk::GreedyMesh(FRuntimeMeshRenderableMeshData& MeshData)

@@ -8,6 +8,22 @@
 #include "SimpleGenerator.generated.h"
 
 USTRUCT(BlueprintType)
+struct FBlockLayer
+{
+	GENERATED_BODY()
+	UPROPERTY(BlueprintReadWrite, EditAnywhere, meta=(UIMin = 0.0, UIMax = 1.0))
+	float Height = 0;
+	UPROPERTY(BlueprintReadWrite, EditAnywhere)
+	uint8 BlockTypeId = UINT8_MAX;
+
+	UPROPERTY(BlueprintReadWrite, EditAnywhere)
+	bool bTopBlockDiffers = false;
+	UPROPERTY(BlueprintReadWrite, EditAnywhere)
+	uint8 TopBlockTypeId = UINT8_MAX;
+	
+};
+
+USTRUCT(BlueprintType)
 struct FNoiseConfig
 {
 	GENERATED_BODY()
@@ -25,6 +41,7 @@ struct FNoiseConfig
 	float Power = 1.0f;
 };
 
+
 /**
  *
  */
@@ -35,9 +52,14 @@ class CUBICWORLD_API USimpleGenerator final : public UGenerator
 public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	FNoiseConfig NoiseConfig;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	FNoiseConfig DistortionNoiseConfig;
+	UPROPERTY(BlueprintReadWrite, EditAnywhere)
+	TArray<FBlockLayer> Layers;
 
 private:
 	FastNoiseLite Noise;
+	FastNoiseLite DistortionNoise;
 	bool bHasBeenInitialized = false;
 	void Init();
 

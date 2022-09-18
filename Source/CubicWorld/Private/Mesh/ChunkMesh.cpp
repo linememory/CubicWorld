@@ -48,7 +48,12 @@ void AChunkMesh::GenerateMesh()
 		RMC->AttachToComponent(GetRootComponent(), FAttachmentTransformRules::SnapToTargetNotIncludingScale);
 		RMC->RegisterComponent();
 		RMC->SetRelativeTransform(FTransform(FVector(0,0,0)));
-		RMC->SetRuntimeMeshMobility(ERuntimeMeshMobility::Stationary);
+		RMC->SetRuntimeMeshMobility(ERuntimeMeshMobility::Movable);
+		if(const FName CollisionProfile = Chunk->GetChunkConfig().WorldConfig.CollisionProfile; CollisionProfile.GetStringLength() > 0)
+		{
+			RMC->SetCollisionProfileName(CollisionProfile);
+		}
+		RMC->UpdateCollisionProfile();
 		RuntimeMeshComponent = RMC;
 
 		if(ChunkProvider == nullptr)
@@ -64,7 +69,6 @@ void AChunkMesh::GenerateMesh()
 			ChunkCollisionProvider->SetChildProvider(ChunkProvider);
 			ChunkCollisionProvider->SetRenderableLODForCollision(0);
 			ChunkCollisionProvider->SetRenderableSectionAffectsCollision(0, true);
-		
 			FRuntimeMeshCollisionSettings CollisionSettings;
 			CollisionSettings.bUseComplexAsSimple = true;
 			CollisionSettings.bUseAsyncCooking = true;

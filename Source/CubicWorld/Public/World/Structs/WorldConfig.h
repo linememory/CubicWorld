@@ -26,6 +26,9 @@ struct FWorldConfig
 	TArray<FBlockType> BlockTypes;
 	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category="Material")
 	UMaterialInterface* Material;
+	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category="Collision")
+	FName CollisionProfile;
+	
 
 	UPROPERTY(BlueprintReadOnly, EditAnywhere, Category="Material")
 	TArray<float> LODs = {1};
